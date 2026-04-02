@@ -1,0 +1,79 @@
+<section id="projects" class="projects-section py-20 px-5 bg-slate-950">
+  <div class="max-w-7xl mx-auto mb-12">
+    <h2 class="text-4xl font-bold text-left text-white">
+      Featured <span class="text-cyan-400">Projects</span>
+    </h2>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+    @for (project of projects(); track project.name) {
+      <div class="project-card group relative bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-5 hover:border-cyan-500/50 transition-all duration-300 hover:-translate-y-2 flex flex-col h-full">
+        
+        <div class="relative group/slider mb-6 rounded-xl overflow-hidden bg-slate-800 aspect-video">
+          <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-full">
+            @if (project.images && project.images.length > 0) {
+              @for (img of project.images; track img) {
+                <div class="flex-shrink-0 w-full h-full snap-center cursor-pointer relative" 
+                     (click)="openLightbox(project.images ?? [], $index)">
+                  <img [src]="img" class="w-full h-full object-cover" [alt]="project.name">
+                  <div class="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] text-white border border-white/10 z-10">
+                    Proof {{ $index + 1 }}/{{ project.images.length }}
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="flex items-center justify-center h-full text-slate-500 italic text-sm">No screenshots yet</div>
+            }
+          </div>
+        </div>
+
+        <h3 class="text-2xl font-bold mb-3 text-white group-hover:text-cyan-400 transition-colors">{{ project.name }}</h3>
+        <p class="text-slate-400 mb-6 line-clamp-3 leading-relaxed">{{ project.description }}</p>
+
+        <div class="flex flex-wrap gap-2 mb-8 mt-auto">
+          @for (tech of project.technologies; track tech) {
+            <span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-full text-[10px] font-bold uppercase">{{ tech }}</span>
+          }
+        </div>
+
+        <div class="flex gap-4">
+          @if (project.github) {
+            <a [href]="project.github" target="_blank" class="flex-1 text-center px-4 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 border border-slate-600 transition-all font-medium text-sm">View Code</a>
+          }
+          @if (project.live) {
+            <a [href]="project.live" target="_blank" class="flex-1 text-center px-4 py-2.5 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 shadow-lg shadow-cyan-900/20 transition-all font-medium text-sm">Live Demo</a>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div *ngIf="isLightboxOpen()" 
+       class="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 md:p-8"
+       (click)="closeLightbox()">
+    
+    <div class="w-full max-w-4xl h-full max-h-[75vh] flex items-center justify-center rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900 relative" 
+         (click)="$event.stopPropagation()">
+      
+      <button (click)="closeLightbox()" 
+              class="absolute top-3 right-5 text-white/70 text-5xl font-extralight hover:text-cyan-400 transition-all z-[10001] cursor-pointer p-2 leading-none">
+        &times;
+      </button>
+      
+      <swiper-container 
+        slides-per-view="1" 
+        navigation="true" 
+        pagination="true" 
+        class="w-full h-full"
+        [initial-slide]="initialSlideIndex()"
+        grab-cursor="true">
+        
+        @for (img of selectedProjectImages(); track img) {
+          <swiper-slide class="flex items-center justify-center h-full p-4 md:p-10">
+            <img [src]="img" class="max-w-full max-h-full object-contain rounded-lg shadow-lg" [alt]="'Proof ' + $index">
+          </swiper-slide>
+        }
+      </swiper-container>
+    </div>
+  </div>
+</section>

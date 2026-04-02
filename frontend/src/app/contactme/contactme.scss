@@ -1,0 +1,183 @@
+/* =========================================
+   FULL SCREEN "NEW PAGE" WRAPPER
+========================================= */
+.full-page-form {
+  position: fixed !important; 
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(2, 6, 23, 0.95) !important; /* Thoda transparent dark theme */
+  backdrop-filter: blur(10px) !important; /* Peeche ka content halka blur karega */
+  z-index: 99999999 !important; 
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;     
+  justify-content: center !important; 
+  overflow-y: auto !important;
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; /* Smooth bouncy entry */
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* =========================================
+   BACK BUTTON
+========================================= */
+.back-btn {
+  position: absolute !important;
+  top: 2rem !important;
+  left: 3rem !important;
+  background: transparent !important;
+  color: #9ca3af !important;
+  border: none !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 2rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.back-btn:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: translateX(-5px) !important; /* Hover pe thoda piche khiskega */
+}
+
+/* =========================================
+   FORM CONTAINER (GLASSMORPHISM EFFECT)
+========================================= */
+.form-container {
+  width: 100% !important;
+  max-width: 600px !important;
+  background: linear-gradient(145deg, #0f172a, #1e293b) !important; /* Premium gradient card */
+  padding: 3rem !important;
+  border-radius: 1.25rem !important;
+  border: 1px solid rgba(34, 211, 238, 0.15) !important; /* Halka cyan border */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(34, 211, 238, 0.05) !important;
+}
+
+.form-heading {
+  font-size: 2.2rem !important;
+  color: #ffffff !important;
+  text-align: center !important;
+  margin-bottom: 0.5rem !important;
+  margin-top: 0 !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.5px !important;
+}
+
+.form-subtext {
+  color: #94a3b8 !important;
+  font-size: 1.05rem !important;
+  text-align: center !important;
+  margin-bottom: 2.5rem !important;
+  line-height: 1.5 !important;
+}
+
+/* =========================================
+   INPUTS & STYLING (PRO LEVEL)
+========================================= */
+.premium-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+  width: 100% !important;
+}
+
+.form-group {
+  display: flex !important;
+  flex-direction: column !important; 
+  gap: 0.6rem !important;
+  width: 100% !important;
+}
+
+label {
+  color: #cbd5e1 !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  text-align: left !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Input, Select, Textarea ka Naya Design */
+.custom-input {
+  width: 100% !important;
+  padding: 1rem 1.2rem !important;
+  background-color: #020617 !important; /* Ekdum dark inputs taaki alag dikhein */
+  border: 2px solid #334155 !important; /* Mota border */
+  border-radius: 0.75rem !important;
+  color: #ffffff !important;
+  font-size: 1.05rem !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Placeholder ka color thoda light */
+.custom-input::placeholder {
+  color: #475569 !important;
+}
+
+/* CLICK KARNE PAR GLOW EFFECT */
+.custom-input:focus {
+  outline: none !important;
+  border-color: #22d3ee !important; /* Cyan border */
+  background-color: #0f172a !important;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.15) !important; /* Bahar ki taraf glow */
+}
+
+select option {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+/* =========================================
+   SUBMIT BUTTON (GRADIENT & GLOW)
+========================================= */
+.submit-btn {
+  margin-top: 1rem !important;
+  padding: 1.2rem !important;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb) !important; /* Blue se Dark Blue gradient */
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+  font-size: 1.15rem !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* Button Hover Animation */
+.submit-btn:hover {
+  transform: translateY(-3px) !important; /* Thoda upar uthega */
+  box-shadow: 0 15px 25px -5px rgba(34, 211, 238, 0.5) !important; /* Cyan glow badhega */
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9) !important;
+}
+
+.submit-btn:active {
+  transform: translateY(1px) !important; /* Click karne par dabe ga */
+}
+
+/* =========================================
+   MOBILE RESPONSIVE
+========================================= */
+@media (max-width: 768px) {
+  .form-container {
+    padding: 2rem 1.5rem !important;
+    max-width: 90% !important;
+  }
+  .back-btn {
+    top: 1rem !important;
+    left: 1rem !important;
+  }
+}

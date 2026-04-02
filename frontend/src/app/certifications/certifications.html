@@ -1,0 +1,136 @@
+<section class="certifications-section" id="certifications">
+  <h2 class="section-heading">Certifications</h2>
+  
+  <div class="cert-grid">
+    
+    <div class="cert-card" (click)="openCertificate('postman.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="postman.png" alt="Postman API" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Postman API Fundamentals Student Expert</h3>
+        <p>Issued by: Postman</p>
+      </div>
+    </div>
+
+
+    <div class="cert-card" (click)="openCertificate('aws cloud practitioner essentials.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="aws cloud practitioner essentials.png" alt="aws cloud practitioner essentials" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Aws cloud practitioner essentials</h3>
+        <p>Issued by: Aws</p>
+      </div>
+    </div>
+
+
+    <div class="cert-card" (click)="openCertificate('Oracle Cloud Infrastructure 2025 Certified Generative AI Professional.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="Oracle Cloud Infrastructure 2025 Certified Generative AI Professional.png" alt="Oracle Cloud Infrastructure 2025 Certified Generative AI Professional" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Oracle Cloud Infrastructure 2025 Certified Generative AI Professional</h3>
+        <p>Issued by: Oracle</p>
+      </div>
+    </div>
+
+
+    <div class="cert-card" (click)="openCertificate('AI fundamental with IBM skillsbuild course.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="AI fundamental with IBM skillsbuild course.png" alt="AI fundamental with IBM skillsbuild course" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>AI fundamental with IBM skillsbuild course</h3>
+        <p>Issued by: Ibm</p>
+      </div>
+    </div>
+
+
+    <div class="cert-card" (click)="openCertificate('aws academy cloud foundation.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="aws academy cloud foundation.png" alt="aws academy cloud foundation" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Aws academy cloud foundation.png</h3>
+        <p>Issued by: Aws</p>
+      </div>
+    </div>
+
+
+     <div class="cert-card" (click)="openCertificate('data science and analytics.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="data science and analytics.png" alt="data science and analytics" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Data science and analytics</h3>
+        <p>Issued by: HP Life</p>
+      </div>
+    </div>
+
+
+    <div class="cert-card" (click)="openCertificate('design and analysis of algorithm.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="design and analysis of algorithm.png" alt="design and analysis of algorithm" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Design and analysis of algorithm</h3>
+        <p>Issued by: Codetantra</p>
+      </div>
+    </div>
+
+
+    <div class="cert-card" (click)="openCertificate('genai powered data analytics job simulation.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="genai powered data analytics job simulation.png" alt="genai powered data analytics job simulation" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>GenAi powered data analytics job simulation</h3>
+        <p>Issued by: Tata,Forage</p>
+      </div>
+    </div>
+
+
+     <div class="cert-card" (click)="openCertificate('hashgraph developer.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="hashgraph developer.png" alt="Hashgraph developer" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Hashgraph Developer</h3>
+        <p>Issued by: Hedera</p>
+      </div>
+    </div>
+
+
+    <div class="cert-card" (click)="openCertificate('solutions arcchitecture job simulation.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="solutions arcchitecture job simulation.png" alt="solutions architecture job simulation" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Solutions architecture job simulation</h3>
+        <p>Issued by: Aws,Forage</p>
+      </div>
+    </div>
+
+    
+    <div class="cert-card" (click)="openCertificate('tata crucial hackathon.png')" style="cursor: pointer;">
+      <div class="cert-image-wrapper">
+        <img src="tata crucial hackathon.png" alt="tata crucial hackathon.png" class="cert-img">
+      </div>
+      <div class="cert-info">
+        <h3>Tata crucial hackathon</h3>
+        <p>Issued by: Tata</p>
+      </div>
+    </div>
+
+    </div>
+
+</section>
+
+<div class="modal-overlay" *ngIf="isModalOpen" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="close-btn" (click)="closeModal()">&times;</div>
+    
+    <img [src]="selectedImage" class="modal-img" alt="Certificate Full View">
+  </div>
+</div>
