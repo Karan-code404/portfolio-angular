@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import SignatureOverlay from './SignatureOverlay';
 
 // ==========================================================================
 // GLSL — Simplex 3D Noise  (Stefan Gustavson / Ashima Arts)
@@ -391,6 +392,9 @@ export default function Hero() {
     <section className="relative w-full h-screen overflow-hidden bg-[#F2F1ED] flex items-center justify-center">
       {/* Dynamic Fluid Topography Lines (SVG behind Canvas, z-0) */}
       <FluidLineBackground />
+
+      {/* Animated Neon Signature Overlay (z-50) */}
+      <SignatureOverlay />
 
       {/* R3F WebGL Canvas (z-10, full-bleed interactive background & portrait) */}
       <div className="absolute inset-0 z-10">
