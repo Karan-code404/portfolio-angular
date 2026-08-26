@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import SignatureOverlay from './SignatureOverlay';
 
 // ==========================================================================
@@ -388,63 +389,77 @@ function FluidLineBackground() {
 // ==========================================================================
 
 export default function Hero() {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end end'],
+  });
+
+  // Image scale: maps scrollYProgress [0, 0.6] -> [1, 0.65]
+  const scale = useTransform(scrollYProgress, [0, 0.6], [1, 0.65]);
+
+  // Signature pathLength: starts halfway through shrinking (0.3) and finishes at same time (0.6)
+  const pathLength = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
+
   return (
-    <section className="relative w-full h-screen overflow-hidden bg-[#F2F1ED] flex items-center justify-center">
-      {/* Dynamic Fluid Topography Lines (SVG behind Canvas, z-0) */}
-      <FluidLineBackground />
+    <section ref={containerRef} className="relative w-full h-[250vh] bg-[#F2F1ED]">
+      <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center">
+        {/* Dynamic Fluid Topography Lines (SVG behind Canvas, z-0) */}
+        <FluidLineBackground />
 
-      {/* Animated Neon Signature Overlay (z-50) */}
-      <SignatureOverlay />
+        {/* Animated Neon Signature Overlay (z-50, scroll-driven pathLength) */}
+        <SignatureOverlay pathLength={pathLength} />
 
-      {/* R3F WebGL Canvas (z-10, full-bleed interactive background & portrait) */}
-      <div className="absolute inset-0 z-10">
-        <Canvas
-          camera={{ position: [0, 0, 1.8], fov: 45 }}
-          gl={{
-            antialias: true,
-            alpha: true,
-            powerPreference: 'high-performance',
-          }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <React.Suspense fallback={null}>
-            <CyborgPlane />
-          </React.Suspense>
-        </Canvas>
-      </div>
+        {/* R3F WebGL Canvas Wrapper (z-10, scroll-driven scale) */}
+        <motion.div style={{ scale }} className="absolute inset-0 z-10 w-full h-full">
+          <Canvas
+            camera={{ position: [0, 0, 1.8], fov: 45 }}
+            gl={{
+              antialias: true,
+              alpha: true,
+              powerPreference: 'high-performance',
+            }}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <React.Suspense fallback={null}>
+              <CyborgPlane />
+            </React.Suspense>
+          </Canvas>
+        </motion.div>
 
-      {/* HTML Overlay Content (z-20) */}
-      <div className="relative z-20 w-full h-full px-6 md:px-10 pt-6 md:pt-8 pb-6 md:pb-8 flex flex-col justify-between pointer-events-none">
-        {/* Top Header Row — Extreme Top Corners */}
-        <div className="flex justify-between items-start">
-          <div className="space-y-1 select-none">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-[#1C1A17] leading-[0.88]">
-              KARAN<br />SHAKYA
-            </h1>
-            <p className="text-xs uppercase tracking-[0.25em] text-[#6B6862] font-bold pt-2">
-              AI, ML &amp; Full Stack Developer
-            </p>
-            <div className="flex items-center gap-1.5 text-xs font-mono text-[#78756E] pt-1">
-              <svg className="w-3.5 h-3.5 text-[#57544E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>Ambala Cantt, Haryana</span>
+        {/* HTML Overlay Content (z-20) */}
+        <div className="relative z-20 w-full h-full px-6 md:px-10 pt-6 md:pt-8 pb-6 md:pb-8 flex flex-col justify-between pointer-events-none">
+          {/* Top Header Row — Extreme Top Corners */}
+          <div className="flex justify-between items-start">
+            <div className="space-y-1 select-none">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-[#1C1A17] leading-[0.88]">
+                KARAN<br />SHAKYA
+              </h1>
+              <p className="text-xs uppercase tracking-[0.25em] text-[#6B6862] font-bold pt-2">
+                AI, ML &amp; Full Stack Developer
+              </p>
+              <div className="flex items-center gap-1.5 text-xs font-mono text-[#78756E] pt-1">
+                <svg className="w-3.5 h-3.5 text-[#57544E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Ambala Cantt, Haryana</span>
+              </div>
+            </div>
+
+            <div className="text-right space-y-1 pointer-events-auto">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#E6E4DD]/80 backdrop-blur-md text-[#383632] border border-[#D8D5CC]">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Available for Projects
+              </span>
             </div>
           </div>
 
-          <div className="text-right space-y-1 pointer-events-auto">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#E6E4DD]/80 backdrop-blur-md text-[#383632] border border-[#D8D5CC]">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Available for Projects
-            </span>
-          </div>
-        </div>
-
-        {/* Bottom Bar — Extreme Bottom Corners */}
-        <div className="flex flex-col sm:flex-row justify-between items-end gap-4 text-xs font-mono text-[#6B6862]">
-          <div className="flex items-center gap-4 pointer-events-auto">
-            <span>© 2026 Karan Shakya. All Rights Reserved.</span>
+          {/* Bottom Bar — Extreme Bottom Corners */}
+          <div className="flex flex-col sm:flex-row justify-between items-end gap-4 text-xs font-mono text-[#6B6862]">
+            <div className="flex items-center gap-4 pointer-events-auto">
+              <span>© 2026 Karan Shakya. All Rights Reserved.</span>
+            </div>
           </div>
         </div>
       </div>
