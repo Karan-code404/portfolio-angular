@@ -7,18 +7,24 @@ import Projects from './components/Projects';
 import Certifications from './components/Certifications';
 import Contact from './components/Contact';
 import ContactMe from './components/ContactMe';
+import LiquidMarbleBackground from './components/LiquidMarbleBackground';
 
 export default function App() {
   const [isContactVisible, setIsContactVisible] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="relative min-h-screen bg-[#141713] text-slate-100 flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">
       
+      {/* Liquid Marble Flowing Animation (Fixed behind ALL components) */}
+      <LiquidMarbleBackground />
+
       {/* Hero Section & Cybernetic face web (100% full-bleed from top) */}
-      <Hero onOpenContact={() => setIsContactVisible(true)} />
+      <div className="relative z-10">
+        <Hero onOpenContact={() => setIsContactVisible(true)} />
+      </div>
 
       {/* Main Container */}
-      <main className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+      <main className="relative z-10 flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
         
         {/* About Section */}
         <About />

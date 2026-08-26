@@ -96,6 +96,7 @@ const fragmentShader = /* glsl */ `
   uniform sampler2D uRobotTex;
   uniform sampler2D uNetworkTex;
   uniform sampler2D uDepthTex;
+  uniform float     uActiveFactor;
   uniform vec2      uMouse;             // viewport UV [0,1], y-flipped
   uniform float     uTime;
   uniform float     uParallaxStrength;
@@ -108,35 +109,31 @@ const fragmentShader = /* glsl */ `
 
   void main() {
     // =============================================================
-    // 1. BROAD LIQUID WAVE FLUID FIELD  (visible grey waves matching screenshot)
+    // 1. BACKGROUND WAVES & CONTOUR PATTERN
     // =============================================================
-    vec2 waveUV1 = vUv * 1.8 + vec2(sin(uTime * 0.08 + vUv.y * 1.8) * 0.45, uTime * 0.05);
-    vec2 waveUV2 = vUv * 3.2 + vec2(-uTime * 0.06, cos(uTime * 0.07 + vUv.x * 2.2) * 0.40) + 73.0;
-
-    float n1 = snoise(vec3(waveUV1, uTime * 0.10));
-    float n2 = snoise(vec3(waveUV2, uTime * 0.08));
-
-    float wavePattern = (n1 * 0.6 + n2 * 0.4) * 0.5 + 0.5;
+    float waveUV1     = snoise(vec3(vUv * 2.2, uTime * 0.05));
+    float waveUV2     = snoise(vec3(vUv * 4.4, uTime * 0.08 + 12.4));
+    float wavePattern = (waveUV1 * 0.65 + waveUV2 * 0.35) * 0.5 + 0.5;
     float bgWaveMask  = smoothstep(0.40, 0.60, wavePattern);
 
     // =============================================================
-    // 2. MAP VIEWPORT UV → FACE IMAGE UV  (faceScale = 0.95, 5cm top gap)
+    // 2. MAP VIEWPORT UV → FACE IMAGE UV  (Hair aligned right at top image border edge)
     // =============================================================
-    float faceScale        = 0.95;
-    float faceWidthInView  = faceScale * uImageAspect / uScreenAspect;
+    float faceScale       = mix(1.26, 0.95, uActiveFactor);
+    float centerY         = mix(0.420, 0.45, uActiveFactor);
+    float faceWidthInView = faceScale * uImageAspect / uScreenAspect;
 
     vec2 faceUV = vec2(
       (vUv.x - 0.5) / faceWidthInView  + 0.5,
-      (vUv.y - 0.45) / faceScale       + 0.5
+      (vUv.y - centerY) / faceScale    + 0.5
     );
 
     float edgeFade = smoothstep(0.0, 0.015, faceUV.x) * smoothstep(1.0, 0.985, faceUV.x)
                    * smoothstep(0.0, 0.015, faceUV.y) * smoothstep(1.0, 0.985, faceUV.y);
 
     // =============================================================
-    // 3. ORGANIC FLUID DROPLET CUTOUT MASK (Exact Lando Norris Screenshot Effect)
+    // 3. ORGANIC FLUID DROPLET CUTOUT MASK
     // =============================================================
-    // Multi-octave organic droplet noise drifting across portrait
     vec2 dropUV1 = faceUV * 4.2 + vec2(sin(uTime * 0.14 + faceUV.y * 2.0) * 0.4, uTime * 0.08);
     vec2 dropUV2 = faceUV * 8.5 + vec2(-uTime * 0.10, cos(uTime * 0.12 + faceUV.x * 3.0) * 0.3) + 31.4;
 
@@ -147,19 +144,19 @@ const fragmentShader = /* glsl */ `
     // Distance attractor to mouse cursor
     vec2 mouseFaceUV = vec2(
       (uMouse.x - 0.5) / faceWidthInView + 0.5,
-      (uMouse.y - 0.45) / faceScale      + 0.5
+      (uMouse.y - centerY) / faceScale   + 0.5
     );
     vec2 delta = faceUV - mouseFaceUV;
     delta.x *= uImageAspect;
     float mouseDist = length(delta);
     float mouseAttractor = smoothstep(0.40, 0.05, mouseDist);
 
-    // Organic fluid droplet cutout threshold (creates distinct droplet cutout windows on face)
+    // Cutout mask fades smoothly to 0 as image shrinks (uActiveFactor -> 0)
     float dropletVal = dropPattern * 0.55 + mouseAttractor * 0.65;
-    float dropCutoutMask = smoothstep(0.50, 0.58, dropletVal);
+    float dropCutoutMask = smoothstep(0.50, 0.58, dropletVal) * uActiveFactor;
 
-    // Light glowing rim stroke around the fluid droplet cutouts
-    float dropBorder = smoothstep(0.48, 0.50, dropCutoutMask) - smoothstep(0.50, 0.56, dropCutoutMask);
+    // Light glowing rim stroke around the fluid droplet cutouts (fades out when shrunk)
+    float dropBorder = (smoothstep(0.48, 0.50, dropCutoutMask) - smoothstep(0.50, 0.56, dropCutoutMask)) * uActiveFactor;
     vec3 borderRimRGB = vec3(0.92, 0.94, 0.96) * dropBorder * 0.70;
 
     // =============================================================
@@ -167,7 +164,7 @@ const fragmentShader = /* glsl */ `
     // =============================================================
     vec2 clampedFaceUV = clamp(faceUV, 0.0, 1.0);
     float depth        = texture2D(uDepthTex, clampedFaceUV).r;
-    vec2  pOff         = (uMouse - 0.5) * depth * uParallaxStrength;
+    vec2  pOff         = (uMouse - 0.5) * depth * uParallaxStrength * uActiveFactor;
 
     vec4 humanColor   = texture2D(uHumanTex,   clamp(clampedFaceUV - pOff,       0.0, 1.0));
     vec4 robotColor   = texture2D(uRobotTex,   clamp(clampedFaceUV - pOff * 1.4, 0.0, 1.0));
@@ -177,15 +174,20 @@ const fragmentShader = /* glsl */ `
     robotColor.a   *= edgeFade;
     networkColor.a *= edgeFade;
 
-    // Holographic scanner wave
+    // Holographic scanner wave (fades out when shrunk)
     float flow = fract(faceUV.y + uTime * 0.22);
     float band = smoothstep(0.0, 0.14, flow) * (1.0 - smoothstep(0.14, 0.32, flow));
     float leadingGlow = smoothstep(0.09, 0.14, flow) * (1.0 - smoothstep(0.14, 0.19, flow));
-    vec3 hologramRGB = networkColor.rgb * (band * 1.6 + leadingGlow * 0.9) * networkColor.a;
+    vec3 hologramRGB = networkColor.rgb * (band * 1.6 + leadingGlow * 0.9) * networkColor.a * uActiveFactor;
 
-    vec3 baseHumanRGB = humanColor.rgb + hologramRGB;
+    // Convert portrait face to Lando Norris monochrome greyscale tone when shrunk
+    float gray = dot(humanColor.rgb, vec3(0.299, 0.587, 0.114));
+    vec3 landoMonochromeRGB = vec3(gray * 0.75); // Muted greyscale portrait tone matching reference screenshot
+    vec3 activeHumanRGB = mix(landoMonochromeRGB, humanColor.rgb, uActiveFactor);
 
-    // Inside the organic fluid droplet cutouts, robot face is revealed with rim stroke!
+    vec3 baseHumanRGB = activeHumanRGB + hologramRGB;
+
+    // Inside cutouts, robot face mixes; when uActiveFactor is 0, faceRGB is 100% Lando-style monochrome portrait!
     vec3 faceRGB   = mix(baseHumanRGB, robotColor.rgb, dropCutoutMask) + borderRimRGB;
     float faceAlpha = humanColor.a;
 
@@ -193,13 +195,16 @@ const fragmentShader = /* glsl */ `
     // 5. LIQUID TOPOGRAPHY CONTOUR LINES & BACKGROUND
     // =============================================================
     float lineScale   = 4.8;
-    float fieldVal    = (n1 * 0.65 + n2 * 0.35) * lineScale + (uTime * 0.04);
+    float fieldVal    = (waveUV1 * 0.65 + waveUV2 * 0.35) * lineScale + (uTime * 0.04);
     float linePattern = abs(sin(fieldVal * 3.14159));
     float lineMask    = smoothstep(0.025, 0.0, linePattern);
 
-    vec3 bgBase    = vec3(0.949, 0.945, 0.929);       // #F2F1ED warm white-grey
-    vec3 lineColor = vec3(0.58, 0.57, 0.55);          // soft light-grey contour lines
-    vec3 waveGrey  = vec3(0.78, 0.77, 0.75);          // warm grey wave tone
+    vec3 bgBaseFull   = vec3(0.949, 0.945, 0.929);      // #F2F1ED warm white-cream
+    vec3 bgBaseShrunk = vec3(0.29, 0.30, 0.28);      // #4A4D47 muted dark grey matching reference screenshot
+    vec3 bgBase       = mix(bgBaseShrunk, bgBaseFull, uActiveFactor);
+
+    vec3 lineColor = mix(vec3(0.24, 0.25, 0.24), vec3(0.58, 0.57, 0.55), uActiveFactor);
+    vec3 waveGrey  = mix(vec3(0.26, 0.27, 0.25), vec3(0.78, 0.77, 0.75), uActiveFactor);
 
     vec3 bgWithWaves = mix(bgBase, waveGrey, bgWaveMask * 0.55);
     vec3 bgWithLines = mix(bgWithWaves, lineColor, lineMask * 0.35);
@@ -214,10 +219,11 @@ const fragmentShader = /* glsl */ `
 // CyborgPlane — full-viewport mesh with noise-fluid shader
 // ==========================================================================
 
-function CyborgPlane() {
-  const materialRef  = useRef();
-  const mouseRaw     = useRef(new THREE.Vector2(0.5, 0.5));
-  const mouseCurrent = useRef(new THREE.Vector2(0.5, 0.5));
+function CyborgPlane({ scrollYProgress }) {
+  const materialRef     = useRef();
+  const mouseRaw        = useRef(new THREE.Vector2(0.5, 0.5));
+  const mouseCurrent    = useRef(new THREE.Vector2(0.5, 0.5));
+  const accumulatedTime = useRef(0);
 
   const { viewport } = useThree();
 
@@ -240,9 +246,6 @@ function CyborgPlane() {
   const imageAspect  = humanTex.image ? humanTex.image.width / humanTex.image.height : 1;
   const screenAspect = viewport.width / viewport.height;
 
-  const planeWidth  = viewport.width;
-  const planeHeight = viewport.height;
-
   useEffect(() => {
     const handler = (e) => {
       mouseRaw.current.set(
@@ -260,6 +263,7 @@ function CyborgPlane() {
       uRobotTex:         { value: robotTex },
       uNetworkTex:       { value: networkTex },
       uDepthTex:         { value: depthTex },
+      uActiveFactor:     { value: 1.0 },
       uMouse:            { value: new THREE.Vector2(0.5, 0.5) },
       uTime:             { value: 0 },
       uParallaxStrength: { value: 0.04 },
@@ -270,24 +274,36 @@ function CyborgPlane() {
     [humanTex, robotTex, networkTex, depthTex],
   );
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (!materialRef.current) return;
 
-    // Viewport UV directly — no conversion needed, plane IS the viewport
-    const lerpFactor = 0.07;
-    mouseCurrent.current.x = THREE.MathUtils.lerp(mouseCurrent.current.x, mouseRaw.current.x, lerpFactor);
-    mouseCurrent.current.y = THREE.MathUtils.lerp(mouseCurrent.current.y, mouseRaw.current.y, lerpFactor);
+    // Get current scroll progress (0 at top full-size, 0.6 when shrunk)
+    const scrollVal = scrollYProgress ? scrollYProgress.get() : 0;
+    
+    // activeFactor drops from 1 at scroll 0 down to 0 at scroll 0.45 (dissolves cyborg cutouts to reveal original human face!)
+    const activeFactor = Math.max(0, 1 - (scrollVal / 0.45));
+
+    if (activeFactor > 0.001) {
+      // Lerp mouse parallax only when active
+      const lerpFactor = 0.07 * activeFactor;
+      mouseCurrent.current.x = THREE.MathUtils.lerp(mouseCurrent.current.x, mouseRaw.current.x, lerpFactor);
+      mouseCurrent.current.y = THREE.MathUtils.lerp(mouseCurrent.current.y, mouseRaw.current.y, lerpFactor);
+      
+      // Accumulate time only when active
+      accumulatedTime.current += delta * activeFactor;
+    }
 
     const u = materialRef.current.uniforms;
+    u.uActiveFactor.value = activeFactor;
     u.uMouse.value.set(mouseCurrent.current.x, mouseCurrent.current.y);
-    u.uTime.value         = state.clock.elapsedTime;
-    u.uScreenAspect.value = state.viewport.width / state.viewport.height;
+    u.uTime.value         = accumulatedTime.current;
+    u.uScreenAspect.value = window.innerWidth / window.innerHeight;
     u.uImageAspect.value  = imageAspect;
   });
 
   return (
     <mesh>
-      <planeGeometry args={[planeWidth, planeHeight]} />
+      <planeGeometry args={[viewport.width, viewport.height]} />
       <shaderMaterial
         ref={materialRef}
         vertexShader={vertexShader}
@@ -301,86 +317,138 @@ function CyborgPlane() {
 }
 
 // ==========================================================================
-// FluidLineBackground — swirling contour lines  (z-0, behind canvas)
+// FluidLineBackground — Dynamic 60 FPS Fluid Wave Topography Lines (z-0)
 // ==========================================================================
 
 function FluidLineBackground() {
-  const paths = useMemo(() => {
-    return Array.from({ length: 14 }, (_, i) => {
-      const y  = 20 + i * 78;
-      const a1 = y - 100 + i * 18;
-      const a2 = y + 240 - i * 28;
-      const a3 = y - 60  + i * 12;
-      return `M-100,${y} C260,${a1} 580,${a2} 960,${y} C1200,${a3} 1480,${a2 - 60} 1720,${y - 20} C1860,${a1 + 60} 2020,${y + 30} 2200,${y - 15}`;
-    });
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let animationFrameId;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const NUM_LINES = 9;
+    const lineConfigs = [
+      { baseRelY: 0.08, amp1: 32, amp2: 20, freq1: 0.0015, freq2: 0.0030, speed: 0.60, phase: 0.0 },
+      { baseRelY: 0.18, amp1: 36, amp2: 24, freq1: 0.0013, freq2: 0.0026, speed: 0.55, phase: 0.9 },
+      { baseRelY: 0.30, amp1: 42, amp2: 26, freq1: 0.0014, freq2: 0.0028, speed: 0.65, phase: 1.8 },
+      { baseRelY: 0.42, amp1: 38, amp2: 28, freq1: 0.0012, freq2: 0.0024, speed: 0.58, phase: 2.7 },
+      { baseRelY: 0.54, amp1: 44, amp2: 30, freq1: 0.0015, freq2: 0.0029, speed: 0.68, phase: 3.6 },
+      { baseRelY: 0.66, amp1: 40, amp2: 24, freq1: 0.0013, freq2: 0.0025, speed: 0.60, phase: 4.5 },
+      { baseRelY: 0.78, amp1: 36, amp2: 26, freq1: 0.0014, freq2: 0.0031, speed: 0.62, phase: 5.4 },
+      { baseRelY: 0.88, amp1: 32, amp2: 22, freq1: 0.0012, freq2: 0.0027, speed: 0.52, phase: 6.3 },
+      { baseRelY: 0.98, amp1: 28, amp2: 20, freq1: 0.0015, freq2: 0.0028, speed: 0.58, phase: 7.2 },
+    ];
+
+    const islandConfigs = [
+      { relX: 0.22, relY: 0.28, baseRx: 110, baseRy: 65, speed: 0.6, phase: 0.2 },
+      { relX: 0.22, relY: 0.28, baseRx: 65,  baseRy: 40, speed: 0.6, phase: 0.2 },
+      { relX: 0.76, relY: 0.68, baseRx: 130, baseRy: 75, speed: 0.55, phase: 1.8 },
+      { relX: 0.76, relY: 0.68, baseRx: 80,  baseRy: 48, speed: 0.55, phase: 1.8 },
+    ];
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    const startTime = performance.now();
+
+    function render(currentTime) {
+      const t = (currentTime - startTime) * 0.001;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#141713';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = '#5a6654';
+      ctx.lineWidth = 1.3;
+      ctx.globalAlpha = 0.55;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const stepX = 25;
+
+      for (let i = 0; i < NUM_LINES; i++) {
+        const cfg = lineConfigs[i];
+        const baseY = cfg.baseRelY * height;
+        const timeOffset = t * cfg.speed + cfg.phase;
+
+        ctx.beginPath();
+        let first = true;
+
+        for (let x = -80; x <= width + 80; x += stepX) {
+          const y = baseY
+            + Math.sin(x * cfg.freq1 + timeOffset) * cfg.amp1
+            + Math.cos(x * cfg.freq2 - timeOffset * 0.75) * cfg.amp2
+            + Math.sin(x * 0.0006 + timeOffset * 0.4 + cfg.phase) * 16;
+
+          if (first) {
+            ctx.moveTo(x, y);
+            first = false;
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
+
+      for (let i = 0; i < islandConfigs.length; i++) {
+        const cfg = islandConfigs[i];
+        const cx = cfg.relX * width + Math.sin(t * cfg.speed * 0.7 + cfg.phase) * 16;
+        const cy = cfg.relY * height + Math.cos(t * cfg.speed * 0.6 + cfg.phase) * 12;
+        const timeOffset = t * cfg.speed + cfg.phase;
+
+        ctx.beginPath();
+        const numPoints = 72;
+        for (let j = 0; j <= numPoints; j++) {
+          const angle = (j / numPoints) * Math.PI * 2;
+          const rOffset = Math.sin(angle * 3.0 + timeOffset) * 12 
+                        + Math.cos(angle * 2.0 - timeOffset * 0.8) * 9;
+          const rx = cfg.baseRx + rOffset;
+          const ry = cfg.baseRy + rOffset * 0.7;
+
+          const px = cx + Math.cos(angle) * rx;
+          const py = cy + Math.sin(angle) * ry;
+
+          if (j === 0) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    }
+
+    animationFrameId = requestAnimationFrame(render);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resize);
+    };
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">
-      {/* Injected keyframes for circular swirl */}
-      <style>{`
-        @keyframes swirlDrift {
-          0%   { transform: scale(1.15) rotate(0deg) translate(0px, 0px); }
-          25%  { transform: scale(1.18) rotate(3deg) translate(25px, -15px); }
-          50%  { transform: scale(1.15) rotate(0deg) translate(-15px, 20px); }
-          75%  { transform: scale(1.18) rotate(-3deg) translate(-25px, -15px); }
-          100% { transform: scale(1.15) rotate(0deg) translate(0px, 0px); }
-        }
-      `}</style>
-
-      <svg
-        className="w-full h-full"
-        viewBox="0 0 2100 1100"
-        preserveAspectRatio="xMidYMid slice"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <filter id="fluidMorph" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.006 0.009"
-              numOctaves="4"
-              result="noise"
-            >
-              <animate
-                attributeName="baseFrequency"
-                dur="45s"
-                values="0.006 0.009;0.010 0.013;0.005 0.007;0.008 0.011;0.006 0.009"
-                repeatCount="indefinite"
-              />
-            </feTurbulence>
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale="24"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-
-        <g
-          filter="url(#fluidMorph)"
-          opacity="0.70"
-          style={{
-            animation: 'swirlDrift 35s ease-in-out infinite',
-            transformOrigin: '50% 50%',
-          }}
-        >
-          {paths.map((d, i) => (
-            <path
-              key={i}
-              d={d}
-              fill="none"
-              stroke="#94918C"
-              strokeWidth={1.3 + (i % 3) * 0.5}
-              strokeDasharray={i % 2 === 0 ? '12 8' : 'none'}
-              opacity={0.35 + (i % 4) * 0.12}
-            />
-          ))}
-        </g>
-      </svg>
-    </div>
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 z-0 pointer-events-none w-full h-full"
+    />
   );
 }
 
@@ -395,51 +463,78 @@ export default function Hero() {
     offset: ['start start', 'end end'],
   });
 
-  // Image scale: maps scrollYProgress [0, 0.6] -> [1, 0.65]
-  const scale = useTransform(scrollYProgress, [0, 0.6], [1, 0.65]);
+  // Start at 1.0 (full screen) and shrink down to 0.45
+  const imageScale = useTransform(scrollYProgress, [0, 0.6], [1.0, 0.45]);
 
-  // Signature pathLength: starts halfway through shrinking (0.3) and finishes at same time (0.6)
-  const pathLength = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
+  // White-grey filter overlay fades in over the image as it shrinks
+  const filterOpacity = useTransform(scrollYProgress, [0, 0.6], [0, 0.55]);
+
+  // Signature opacity (Hides neon endpoint dots completely when un-scrolled at top!)
+  const signatureOpacity = useTransform(scrollYProgress, [0.28, 0.32], [0, 1]);
+
+  // Signature draws perfectly synced in the second half of scale shrink
+  const signatureDraw = useTransform(scrollYProgress, [0.3, 0.6], [0, 1]);
 
   return (
-    <section ref={containerRef} className="relative w-full h-[250vh] bg-[#F2F1ED]">
-      <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center">
-        {/* Dynamic Fluid Topography Lines (SVG behind Canvas, z-0) */}
-        <FluidLineBackground />
+    <div
+      ref={containerRef}
+      className="relative h-[250vh] bg-transparent w-full"
+    >
+      {/* Sticky Parent */}
+      <div className="sticky top-0 w-full h-screen flex items-center justify-center">
 
-        {/* Animated Neon Signature Overlay (z-50, scroll-driven pathLength) */}
-        <SignatureOverlay pathLength={pathLength} />
+        {/* The Scaling Wrapper - MUST be full screen. 
+            Framer Motion will visually scale the entire composition down as a single flat unit. */}
+        <motion.div
+          style={{ scale: imageScale }}
+          className="relative w-full h-screen origin-center flex items-center justify-center z-10"
+        >
+          {/* Rounded Image Card Container (Clipped portrait canvas & white-grey filter overlay) */}
+          <div className="relative w-full h-screen rounded-3xl overflow-hidden shadow-2xl z-10">
+            {/* A. The WebGL Canvas */}
+            <div className="absolute inset-0 z-10 w-full h-full pointer-events-auto">
+              <Canvas
+                resize={{ offsetSize: true }}
+                camera={{ position: [0, 0, 1.8], fov: 45 }}
+                gl={{
+                  antialias: true,
+                  alpha: true,
+                  powerPreference: 'high-performance',
+                }}
+                style={{ width: '100%', height: '100%' }}
+              >
+                <React.Suspense fallback={null}>
+                  <CyborgPlane scrollYProgress={scrollYProgress} />
+                </React.Suspense>
+              </Canvas>
+            </div>
 
-        {/* R3F WebGL Canvas Wrapper (z-10, scroll-driven scale) */}
-        <motion.div style={{ scale }} className="absolute inset-0 z-10 w-full h-full">
-          <Canvas
-            camera={{ position: [0, 0, 1.8], fov: 45 }}
-            gl={{
-              antialias: true,
-              alpha: true,
-              powerPreference: 'high-performance',
-            }}
-            style={{ width: '100%', height: '100%' }}
-          >
-            <React.Suspense fallback={null}>
-              <CyborgPlane />
-            </React.Suspense>
-          </Canvas>
+            {/* B. Translucent White-Grey Color Filter Overlay (Preserves 100% face & body visibility) */}
+            <motion.div
+              style={{ opacity: filterOpacity }}
+              className="absolute inset-0 z-20 bg-[#E8E6E1]/35 backdrop-brightness-95 pointer-events-none"
+            />
+          </div>
+
+          {/* C. The Signature Overlay (Shifted right & down so eyes remain 100% uncovered & visible!) */}
+          <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none translate-x-12 md:translate-x-24 translate-y-12 md:translate-y-24">
+            <SignatureOverlay pathLength={signatureDraw} opacity={signatureOpacity} />
+          </div>
         </motion.div>
 
-        {/* HTML Overlay Content (z-20) */}
-        <div className="relative z-20 w-full h-full px-6 md:px-10 pt-6 md:pt-8 pb-6 md:pb-8 flex flex-col justify-between pointer-events-none">
+        {/* HTML Overlay Content (z-30 — Top header & bottom copyright in extreme corners) */}
+        <div className="absolute inset-0 z-30 w-full h-full px-6 md:px-10 pt-6 md:pt-8 pb-6 md:pb-8 flex flex-col justify-between pointer-events-none">
           {/* Top Header Row — Extreme Top Corners */}
           <div className="flex justify-between items-start">
             <div className="space-y-1 select-none">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-[#1C1A17] leading-[0.88]">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-[#00F0FF] leading-[0.88]">
                 KARAN<br />SHAKYA
               </h1>
-              <p className="text-xs uppercase tracking-[0.25em] text-[#6B6862] font-bold pt-2">
+              <p className="text-xs uppercase tracking-[0.25em] text-[#00E5FF]/80 font-bold pt-2">
                 AI, ML &amp; Full Stack Developer
               </p>
-              <div className="flex items-center gap-1.5 text-xs font-mono text-[#78756E] pt-1">
-                <svg className="w-3.5 h-3.5 text-[#57544E]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-[#00F0FF]/80 pt-1">
+                <svg className="w-3.5 h-3.5 text-[#00F0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -448,21 +543,21 @@ export default function Hero() {
             </div>
 
             <div className="text-right space-y-1 pointer-events-auto">
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#E6E4DD]/80 backdrop-blur-md text-[#383632] border border-[#D8D5CC]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-[#242624]/80 backdrop-blur-md text-[#00F0FF] border border-[#00F0FF]/30">
+                <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-pulse" />
                 Available for Projects
               </span>
             </div>
           </div>
 
           {/* Bottom Bar — Extreme Bottom Corners */}
-          <div className="flex flex-col sm:flex-row justify-between items-end gap-4 text-xs font-mono text-[#6B6862]">
+          <div className="flex flex-col sm:flex-row justify-between items-end gap-4 text-xs font-mono text-[#00E5FF]/70">
             <div className="flex items-center gap-4 pointer-events-auto">
               <span>© 2026 Karan Shakya. All Rights Reserved.</span>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
