@@ -4,7 +4,7 @@ import Hero from './components/Hero';
 import About from './components/About';
 import Skills from './components/Skills';
 import Projects from './components/Projects';
-import Certifications from './components/Certifications';
+import Certificates from './components/Certificates';
 import Contact from './components/Contact';
 import ContactMe from './components/ContactMe';
 import LiquidMarbleBackground from './components/LiquidMarbleBackground';
@@ -23,7 +23,7 @@ export default function App() {
         <Hero onOpenContact={() => setIsContactVisible(true)} />
       </div>
 
-      {/* Main Container */}
+      {/* Main Container: Upper Sections */}
       <main className="relative z-10 flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
         
         {/* About Section */}
@@ -32,16 +32,22 @@ export default function App() {
         {/* Skills Section */}
         <Skills />
 
+      </main>
+
+      {/* Full-bleed Sticky Horizontal Scroll Certificates Section (Lando Norris Aesthetic) */}
+      <div className="relative z-10 w-full">
+        <Certificates />
+      </div>
+
+      {/* Main Container: Lower Sections */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
+        
         {/* Projects Section */}
         <Projects />
 
-        {/* Certifications Section */}
-        <Certifications />
-
         {/* Contact Footer Section */}
         <Contact />
-
-      </main>
+      </div>
 
       {/* Overlay Contact Me Form */}
       {isContactVisible && (

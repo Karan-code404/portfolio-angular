@@ -119,8 +119,8 @@ const fragmentShader = /* glsl */ `
     // =============================================================
     // 2. MAP VIEWPORT UV → FACE IMAGE UV  (Hair aligned right at top image border edge)
     // =============================================================
-    float faceScale       = mix(1.26, 0.95, uActiveFactor);
-    float centerY         = mix(0.420, 0.45, uActiveFactor);
+    float faceScale       = mix(1.30, 0.95, uActiveFactor);  // slight zoom — full face visible
+    float centerY         = mix(0.40, 0.45, uActiveFactor);  // balanced — hair top, chin bottom
     float faceWidthInView = faceScale * uImageAspect / uScreenAspect;
 
     vec2 faceUV = vec2(
@@ -463,11 +463,15 @@ export default function Hero() {
     offset: ['start start', 'end end'],
   });
 
-  // Start at 1.0 (full screen) and shrink down to 0.45
-  const imageScale = useTransform(scrollYProgress, [0, 0.6], [1.0, 0.45]);
+  // Height shrinks to 0.45, width shrinks MORE (to 0.38) → portrait card shape when small
+  const imageScaleY = useTransform(scrollYProgress, [0, 0.6], [1.0, 0.45]);
+  const imageScaleX = useTransform(scrollYProgress, [0, 0.6], [1.0, 0.33]);
 
   // White-grey filter overlay fades in over the image as it shrinks
   const filterOpacity = useTransform(scrollYProgress, [0, 0.6], [0, 0.55]);
+
+  // Fades in instantly as scroll begins (0 to 0.1) and stays at 1.0 until the end
+  const bgTextOpacity = useTransform(scrollYProgress, [0, 0.1, 1], [0, 1, 1]);
 
   // Signature opacity (Hides neon endpoint dots completely when un-scrolled at top!)
   const signatureOpacity = useTransform(scrollYProgress, [0.28, 0.32], [0, 1]);
@@ -483,10 +487,90 @@ export default function Hero() {
       {/* Sticky Parent */}
       <div className="sticky top-0 w-full h-screen flex items-center justify-center">
 
+        {/* CSS Keyframes for seamless infinite marquee loop */}
+        <style>{`
+          @keyframes seamless-marquee-left {
+            0%   { transform: translateX(0%); }
+            100% { transform: translateX(-100%); }
+          }
+          @keyframes seamless-marquee-right {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(0%); }
+          }
+        `}</style>
+
+        {/* Background Marquee Text — Sits behind image (z-0), 100% seamless, never disappears */}
+        <motion.div
+          style={{ opacity: bgTextOpacity }}
+          className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none overflow-hidden z-0 select-none w-full"
+        >
+          {/* Top Cyan Line — scrolls left */}
+          <div className="w-full overflow-hidden flex">
+            <div
+              className="flex shrink-0 whitespace-nowrap"
+              style={{ animation: 'seamless-marquee-left 120s linear infinite' }}
+            >
+              {Array(6).fill(null).map((_, i) => (
+                <span
+                  key={i}
+                  className="text-[#00F0FF] text-[5vw] md:text-[6vw] font-black uppercase tracking-tighter leading-none mr-12"
+                >
+                  PROCESSING DATA OPTIMIZING INTELLIGENCE
+                </span>
+              ))}
+            </div>
+            <div
+              className="flex shrink-0 whitespace-nowrap"
+              aria-hidden="true"
+              style={{ animation: 'seamless-marquee-left 120s linear infinite' }}
+            >
+              {Array(6).fill(null).map((_, i) => (
+                <span
+                  key={i}
+                  className="text-[#00F0FF] text-[5vw] md:text-[6vw] font-black uppercase tracking-tighter leading-none mr-12"
+                >
+                  PROCESSING DATA OPTIMIZING INTELLIGENCE
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom White-Grey Line — scrolls right */}
+          <div className="w-full overflow-hidden flex -mt-1 md:-mt-3">
+            <div
+              className="flex shrink-0 whitespace-nowrap"
+              style={{ animation: 'seamless-marquee-right 120s linear infinite' }}
+            >
+              {Array(6).fill(null).map((_, i) => (
+                <span
+                  key={i}
+                  className="text-[#D1D5DB] text-[5vw] md:text-[6vw] font-black uppercase tracking-tighter leading-none mr-12"
+                >
+                  EVOLVING CODE PREDICTING FUTURES.
+                </span>
+              ))}
+            </div>
+            <div
+              className="flex shrink-0 whitespace-nowrap"
+              aria-hidden="true"
+              style={{ animation: 'seamless-marquee-right 120s linear infinite' }}
+            >
+              {Array(6).fill(null).map((_, i) => (
+                <span
+                  key={i}
+                  className="text-[#D1D5DB] text-[5vw] md:text-[6vw] font-black uppercase tracking-tighter leading-none mr-12"
+                >
+                  EVOLVING CODE PREDICTING FUTURES.
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
         {/* The Scaling Wrapper - MUST be full screen. 
             Framer Motion will visually scale the entire composition down as a single flat unit. */}
         <motion.div
-          style={{ scale: imageScale }}
+          style={{ scaleX: imageScaleX, scaleY: imageScaleY }}
           className="relative w-full h-screen origin-center flex items-center justify-center z-10"
         >
           {/* Rounded Image Card Container (Clipped portrait canvas & white-grey filter overlay) */}

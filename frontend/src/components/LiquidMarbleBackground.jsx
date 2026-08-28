@@ -13,11 +13,12 @@ void main() {
 `;
 
 const FRAGMENT_SHADER = `
+#extension GL_OES_standard_derivatives : enable
 precision highp float;
 uniform vec2 u_resolution;
 uniform float u_time;
 
-// Smooth 2D Value Noise with analytical quintic interpolation (C2 continuous)
+// Smooth 2D Value Noise
 float hash(vec2 p) {
   p = 50.0 * fract(p * 0.3183099 + vec2(0.71, 0.113));
   return -1.0 + 2.0 * fract(p.x * p.y * (p.x + p.y));
@@ -26,7 +27,6 @@ float hash(vec2 p) {
 float noise(in vec2 p) {
   vec2 i = floor(p);
   vec2 f = fract(p);
-  // Quintic smoothstep for silky C2 continuity
   vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
   return mix(mix(hash(i + vec2(0.0, 0.0)), 
                  hash(i + vec2(1.0, 0.0)), u.x),
@@ -34,50 +34,43 @@ float noise(in vec2 p) {
                  hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
-// Low frequency 2-octave smooth FBM (Strictly large shapes, NO micro noise)
 float fbm(vec2 p) {
   return 0.65 * noise(p) + 0.35 * noise(p * 2.02 + vec2(2.4, 1.7));
 }
 
 void main() {
-  // Aspect-ratio normalized coordinates
   vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
   
-  // Scale domain for large, broad organic marble ribbons matching the reference image
-  p *= 1.4;
+  // Smaller p value = larger features = big organic blob shapes like Lando site
+  p *= 0.75;
   
-  float t = u_time * 0.06;
+  float t = u_time * 0.1125; // 2x faster
 
-  // Broad 2-Tier Domain Warping (Creates large fluid marble swirls, U-turns, and pools)
+  // Single-tier light warp only — keeps shapes as CLOSED LOOPS (blobs), not ribbons
   vec2 q = vec2(
-    fbm(p + vec2(0.0, 0.0) + vec2(t * 0.4, t * 0.2)),
-    fbm(p + vec2(4.2, 1.8) + vec2(-t * 0.3, t * 0.35))
+    fbm(p + vec2(0.0, 0.0) + vec2(t * 0.2, t * 0.1)),
+    fbm(p + vec2(3.7, 2.1) + vec2(-t * 0.15, t * 0.18))
   );
 
-  vec2 r = vec2(
-    fbm(p + 1.2 * q + vec2(1.7, 9.2) + vec2(t * 0.25, -t * 0.3)),
-    fbm(p + 1.2 * q + vec2(8.3, 2.8) + vec2(-t * 0.3, t * 0.2))
-  );
+  // Low warp strength (0.3) = shapes stay closed like kidney/amoeba blobs
+  float f = fbm(p + q * 0.3 + vec2(t * 0.06, t * 0.04));
 
-  // Large-scale smooth continuous marble field
-  float f = fbm(p + 1.3 * r + vec2(t * 0.15, t * 0.15));
-
-  // --- ULTRA-THIN HAIRLINE CONTOUR LINES ---
-  // Wide spacing between delicate contour lines
-  float numBands = 3.6;
+  float numBands = 8.25; // 1.5x tighter gap
   float wave = f * numBands * 3.14159265;
-  
-  // Continuous smooth cosine lines (100% solid, unbreakable, no grain)
   float lineVal = cos(wave);
-  
-  // Ultra-thin delicate hairline profile (exact match to Lando Norris screenshot)
-  float line = smoothstep(0.970, 0.998, lineVal);
 
-  // Single Uniform Line Color on Dark Matte Canvas (#141713)
+  // fwidth() gives the exact screen-space pixel size of the wave derivative
+  // This makes lines precisely 1px wide regardless of resolution
+  float fw = fwidth(lineVal);
+  float line = 1.0 - smoothstep(0.0, fw * 1.2, abs(lineVal - 1.0));
+
   vec3 bgColor = vec3(0.078, 0.090, 0.075);
-  vec3 lineColor = vec3(0.58, 0.66, 0.52);
 
-  vec3 finalColor = mix(bgColor, lineColor, line * 0.90);
+  // Slightly lighter than bg — barely perceptible like Lando site
+  vec3 lineColor = vec3(0.140, 0.160, 0.125);
+
+  // Low blend so lines are whisper-thin in color too
+  vec3 finalColor = mix(bgColor, lineColor, line * 0.50);
 
   gl_FragColor = vec4(finalColor, 1.0);
 }
@@ -98,6 +91,9 @@ export default function LiquidMarbleBackground() {
     }) || canvas.getContext('experimental-webgl');
 
     if (!gl) return;
+
+    // Enable derivatives extension — required for fwidth() in fragment shader
+    gl.getExtension('OES_standard_derivatives');
 
     function createShader(gl, type, source) {
       const shader = gl.createShader(type);

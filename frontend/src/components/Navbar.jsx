@@ -41,18 +41,18 @@ export default function Navbar({ onOpenContact }) {
         </li>
         <li>
           <a
-            href="#projects"
-            className="text-slate-300 hover:text-cyan-400 font-medium text-sm transition-colors duration-300 relative py-1 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-cyan-400 hover:after:w-full after:transition-all after:duration-300"
-          >
-            Projects
-          </a>
-        </li>
-        <li>
-          <a
             href="#certifications"
             className="text-slate-300 hover:text-cyan-400 font-medium text-sm transition-colors duration-300 relative py-1 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-cyan-400 hover:after:w-full after:transition-all after:duration-300"
           >
             Certifications
+          </a>
+        </li>
+        <li>
+          <a
+            href="#projects"
+            className="text-slate-300 hover:text-cyan-400 font-medium text-sm transition-colors duration-300 relative py-1 after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-cyan-400 hover:after:w-full after:transition-all after:duration-300"
+          >
+            Projects
           </a>
         </li>
         <li>
