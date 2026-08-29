@@ -39,12 +39,14 @@ export default function App() {
         <Certificates />
       </div>
 
+      {/* Projects Section - Full Bleed Unclipped Container for Dynamic Magnetic Fan Repulsion */}
+      <div className="relative z-10 w-full overflow-visible">
+        <Projects />
+      </div>
+
       {/* Main Container: Lower Sections */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6">
         
-        {/* Projects Section */}
-        <Projects />
-
         {/* Contact Footer Section */}
         <Contact />
       </div>

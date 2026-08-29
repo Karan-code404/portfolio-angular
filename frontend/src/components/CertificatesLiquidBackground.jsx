@@ -1,12 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 
 // ==========================================================================
-// LiquidMarbleBackground — Single Global WebGL Water Wave Background
-// - ONE unified continuous wave physics simulation across the entire portfolio
-// - Smoothly transitions Dark (#141713) -> Pure White (#ffffff) in Certificates
-// - Stays Pure White throughout the Featured Projects section
-// - Returns smoothly to Dark (#141713) for Contact footer
-// - Wave lines transition to crisp Light Grey (#d1d5db) on white background
+// CertificatesLiquidBackground — Scroll-Responsive Liquid Water Wave Shader
+// Transitions Background from Dark (#141713) to Pure White (#ffffff)
+// Transitions Wave Lines from Luminous Dark-Theme to Clean Light-Grey (#d1d5db)
 // ==========================================================================
 
 const VERTEX_SHADER = /* glsl */ `
@@ -25,7 +22,7 @@ precision highp float;
 
 uniform vec2 u_resolution;
 uniform float u_time;
-uniform float u_whiteProgress; // 0.0 = Dark (#141713), 1.0 = Pure White (#ffffff)
+uniform float u_progress; // 0.0 (start) to 1.0 (end) scroll progress
 
 varying vec2 vUv;
 
@@ -94,7 +91,7 @@ float snoise(vec3 v) {
 
 // --------------------------------------------------------------------------
 // Real Water Wave Height Function: 4 Random Wandering Dynamic Points
-// - Strictly 1.5 to 2 Clean Rings Emit & Expand Outward -> Smoothly Shrink Back
+// - 1.5 to 2 Clean Rings Emit & Expand Outward -> Smoothly Shrink Back
 // - Natural Collision Merging on Overlap
 // --------------------------------------------------------------------------
 float getWaterHeight(vec2 p, float t, float aspect) {
@@ -131,16 +128,16 @@ float getWaterHeight(vec2 p, float t, float aspect) {
   ) * vec2(maxX, maxY);
 
   // 3. CYCLICAL 1.5 - 2 CLEAN RINGS EMISSION & INWARD SHRINKING:
-  float cycleSpeed = 0.025; // Meditative slow speed (~125s cycle)
+  float cycleSpeed = 0.025; // Meditative slow speed
   float twoPi = 6.2831853;
-  float wavesPhase = 1.75 * twoPi; // Strictly 1.5 to 2 clean rings
+  float wavesPhase = 1.75 * twoPi; // Exactly 1.5 - 2 clean rings
 
   float phase1 = sin(t * cycleSpeed) * wavesPhase;
   float phase2 = sin(t * cycleSpeed + 1.57) * wavesPhase;
   float phase3 = sin(t * cycleSpeed + 3.14) * wavesPhase;
   float phase4 = sin(t * cycleSpeed + 4.71) * wavesPhase;
 
-  float ripFreq = 5.4; // Crisp natural water ripple frequency
+  float ripFreq = 5.4; // Natural crisp frequency
 
   // Distances to points
   float r1 = length(wp - pt1);
@@ -148,7 +145,7 @@ float getWaterHeight(vec2 p, float t, float aspect) {
   float r3 = length(wp - pt3);
   float r4 = length(wp - pt4);
 
-  // Spatial radial envelopes strictly restricted to 1.5 - 2 rings radius
+  // Spatial radial envelopes restricted to 1.5 - 2 rings radius
   float env1 = smoothstep(1.9, 0.15, r1) / (1.0 + r1 * 0.75);
   float env2 = smoothstep(1.9, 0.15, r2) / (1.0 + r2 * 0.75);
   float env3 = smoothstep(1.9, 0.15, r3) / (1.0 + r3 * 0.75);
@@ -159,7 +156,7 @@ float getWaterHeight(vec2 p, float t, float aspect) {
   float wave3 = cos(r3 * ripFreq - phase3) * env3;
   float wave4 = cos(r4 * ripFreq - phase4) * env4;
 
-  // Subtle ultra-slow ambient ocean swells
+  // Subtle ambient swells
   float swell = sin(dot(wp, vec2(0.9, 0.5)) * 1.6 - t * 0.007) * 0.20
               + sin(dot(wp, vec2(-0.6, 1.1)) * 1.4 - t * 0.005 + 1.2) * 0.16;
 
@@ -186,54 +183,18 @@ void main() {
   float lineWidth = 0.65;
   float crestLine = 1.0 - smoothstep(lineWidth - 0.55, lineWidth + 0.55, pixelDist);
 
-  // Multi-Stop Perceptually Linear Color Progression:
-  // 0.00: Deep Luxury Dark (#141713)
-  // 0.20: Rich Forest Slate (#242d27)
-  // 0.40: Mid Moss Slate (#425047)
-  // 0.60: Soft Sage Mist (#738379)
-  // 0.80: Silver Sage Platinum (#b8c5be)
-  // 1.00: Pure Radiant Solid White (#ffffff)
-  vec3 c0 = vec3(0.078, 0.090, 0.075);
-  vec3 c1 = vec3(0.141, 0.176, 0.153);
-  vec3 c2 = vec3(0.259, 0.314, 0.278);
-  vec3 c3 = vec3(0.451, 0.514, 0.475);
-  vec3 c4 = vec3(0.722, 0.773, 0.745);
-  vec3 c5 = vec3(1.000, 1.000, 1.000);
+  // Dynamic Scroll Progression Interpolation (Dark -> Pure White Background)
+  float blendProgress = smoothstep(0.0, 0.55, u_progress);
 
-  vec3 currentBg;
-  float progress = clamp(u_whiteProgress, 0.0, 1.0);
-  if (progress < 0.20) {
-    currentBg = mix(c0, c1, progress / 0.20);
-  } else if (progress < 0.40) {
-    currentBg = mix(c1, c2, (progress - 0.20) / 0.20);
-  } else if (progress < 0.60) {
-    currentBg = mix(c2, c3, (progress - 0.40) / 0.20);
-  } else if (progress < 0.80) {
-    currentBg = mix(c3, c4, (progress - 0.60) / 0.20);
-  } else {
-    currentBg = mix(c4, c5, (progress - 0.80) / 0.20);
-  }
+  // Background: Dark #141713 -> Pure Solid White #ffffff
+  vec3 darkBg = vec3(0.078, 0.090, 0.075);
+  vec3 whiteBg = vec3(1.0, 1.0, 1.0);
+  vec3 currentBg = mix(darkBg, whiteBg, blendProgress);
 
-  // Wave Lines Progression (Synchronized through each shade to #d1d5db on white)
-  vec3 l0 = vec3(0.220, 0.298, 0.259);
-  vec3 l1 = vec3(0.290, 0.384, 0.337);
-  vec3 l2 = vec3(0.408, 0.510, 0.459);
-  vec3 l3 = vec3(0.549, 0.627, 0.580);
-  vec3 l4 = vec3(0.706, 0.761, 0.725);
-  vec3 l5 = vec3(0.820, 0.835, 0.859); // Crisp Light Grey (#d1d5db)
-
-  vec3 currentLine;
-  if (progress < 0.20) {
-    currentLine = mix(l0, l1, progress / 0.20);
-  } else if (progress < 0.40) {
-    currentLine = mix(l1, l2, (progress - 0.20) / 0.20);
-  } else if (progress < 0.60) {
-    currentLine = mix(l2, l3, (progress - 0.40) / 0.20);
-  } else if (progress < 0.80) {
-    currentLine = mix(l3, l4, (progress - 0.60) / 0.20);
-  } else {
-    currentLine = mix(l4, l5, (progress - 0.80) / 0.20);
-  }
+  // Contour Lines: Dark-Theme Luminous Line -> Light-Grey Line on White #d1d5db
+  vec3 darkLine = vec3(0.28, 0.38, 0.34);
+  vec3 lightGreyLine = vec3(0.74, 0.77, 0.80); // Crisp elegant light-grey contour line
+  vec3 currentLine = mix(darkLine, lightGreyLine, blendProgress);
 
   vec3 finalColor = mix(currentBg, currentLine, crestLine * 0.85);
 
@@ -241,8 +202,18 @@ void main() {
 }
 `;
 
-export default function LiquidMarbleBackground() {
+export default function CertificatesLiquidBackground({ scrollYProgress }) {
   const canvasRef = useRef(null);
+  const scrollProgressRef = useRef(0);
+
+  // Listen to framer-motion scrollYProgress changes
+  useEffect(() => {
+    if (!scrollYProgress) return;
+    const unsubscribe = scrollYProgress.on('change', (latest) => {
+      scrollProgressRef.current = latest;
+    });
+    return () => unsubscribe();
+  }, [scrollYProgress]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -308,17 +279,16 @@ export default function LiquidMarbleBackground() {
 
     const uResolution = gl.getUniformLocation(program, 'u_resolution');
     const uTime = gl.getUniformLocation(program, 'u_time');
-    const uWhiteProgress = gl.getUniformLocation(program, 'u_whiteProgress');
+    const uProgress = gl.getUniformLocation(program, 'u_progress');
 
     let animationFrameId;
     const startTime = performance.now();
-    let currentWhiteProgress = 0.0;
 
     function resize() {
       if (!canvas) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      const width = canvas.clientWidth || window.innerWidth;
+      const height = canvas.clientHeight || window.innerHeight;
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -328,58 +298,10 @@ export default function LiquidMarbleBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    // Compute dynamic white transition factor based on page scroll
-    function computeWhiteProgress() {
-      const certEl = document.getElementById('certifications');
-      const projectsEl = document.getElementById('projects');
-      const contactEl = document.getElementById('contact');
-
-      const winHeight = window.innerHeight || 1;
-      let target = 0.0;
-
-      if (certEl) {
-        const certRect = certEl.getBoundingClientRect();
-        const certTotalScrollable = certEl.offsetHeight - winHeight;
-
-        if (certRect.top <= 0 && certRect.bottom >= 0 && certTotalScrollable > 0) {
-          // Inside horizontal scroll of Certificates:
-          // Direct 1:1 linear mapping from 0.0 to 1.0 across the full scroll journey
-          const rawProgress = Math.min(Math.max(-certRect.top / certTotalScrollable, 0), 1);
-          target = rawProgress;
-        } else if (certRect.bottom < 0) {
-          // Past Certificates -> User is in Projects section (Pure White)!
-          target = 1.0;
-        }
-      }
-
-      // Keep solid white while in Projects section
-      if (projectsEl) {
-        const projRect = projectsEl.getBoundingClientRect();
-        if (projRect.top < winHeight && projRect.bottom > 0) {
-          target = 1.0;
-        }
-      }
-
-      // Smoothly fade back to dark when entering Contact section
-      if (contactEl) {
-        const contactRect = contactEl.getBoundingClientRect();
-        if (contactRect.top < winHeight) {
-          const fadeToDark = Math.min(Math.max((winHeight - contactRect.top) / (winHeight * 0.6), 0), 1);
-          target = Math.max(0.0, target * (1.0 - fadeToDark));
-        }
-      }
-
-      return target;
-    }
-
     function render(currentTime) {
       const elapsed = (currentTime - startTime) * 0.001;
-      const targetWhite = computeWhiteProgress();
-      // Responsive interpolation for immediate real-time visual feedback on scroll
-      currentWhiteProgress += (targetWhite - currentWhiteProgress) * 0.25;
-
       gl.uniform1f(uTime, elapsed);
-      gl.uniform1f(uWhiteProgress, currentWhiteProgress);
+      gl.uniform1f(uProgress, scrollProgressRef.current);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       animationFrameId = requestAnimationFrame(render);
     }
@@ -399,8 +321,7 @@ export default function LiquidMarbleBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 z-0 pointer-events-none"
-      style={{ width: '100vw', height: '100vh' }}
+      className="absolute inset-0 w-full h-full pointer-events-none z-0"
     />
   );
 }

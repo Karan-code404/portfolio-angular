@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import { Eye, X, Award, ExternalLink, Sparkles } from 'lucide-react';
 
 const certificates = [
@@ -87,16 +87,46 @@ const certificates = [
 
 export default function Certificates() {
   const targetRef = useRef(null);
+  const viewportRef = useRef(null);
   const [selectedCert, setSelectedCert] = useState(null);
 
+  // 1. Scroll progress mapped strictly to the Certificates 450vh container
   const { scrollYProgress } = useScroll({
     target: targetRef,
     offset: ["start start", "end end"]
   });
 
-  // Smooth horizontal scroll translation across the track
+  // Precision Trigger: fires when 40%-50% of the section viewport is in view
+  const isInView = useInView(viewportRef, {
+    once: false,
+    amount: 0.45
+  });
+
+  // 2. Horizontal track motion
   const x = useTransform(scrollYProgress, [0, 1], ["0%", "-78%"]);
   const progressWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+  // Background lets the single global continuous water wave background show through
+  const sectionBg = useTransform(scrollYProgress, [0, 0.6, 1], ["transparent", "transparent", "transparent"]);
+  const headingColor = useTransform(scrollYProgress, [0, 0.85], ["#FFFFFF", "#09090b"]);
+  const subtextColor = useTransform(scrollYProgress, [0, 0.85], ["#A1A1AA", "#1e293b"]);
+  const accentColor = useTransform(scrollYProgress, [0, 0.85], ["#00F0FF", "#0284C7"]);
+  const accentBorder = useTransform(scrollYProgress, [0, 0.85], ["rgba(0, 240, 255, 0.3)", "rgba(2, 132, 199, 0.35)"]);
+  const accentPillBg = useTransform(scrollYProgress, [0, 0.85], ["rgba(8, 51, 68, 0.5)", "rgba(224, 242, 254, 0.95)"]);
+
+  // Card Surfaces & Borders (Dark translucent -> pure crisp elevated light card)
+  const cardBg = useTransform(scrollYProgress, [0, 0.85], ["rgba(24, 28, 25, 0.85)", "rgba(255, 255, 255, 0.98)"]);
+  const cardBorder = useTransform(scrollYProgress, [0, 0.85], ["rgba(255, 255, 255, 0.1)", "rgba(15, 23, 42, 0.15)"]);
+  const cardShadow = useTransform(
+    scrollYProgress,
+    [0, 0.85],
+    ["0 0 0 rgba(0, 0, 0, 0)", "0 25px 50px -12px rgba(15, 23, 42, 0.15)"]
+  );
+  const cardTitleColor = useTransform(scrollYProgress, [0, 0.85], ["#FFFFFF", "#09090b"]);
+  const cardFooterBg = useTransform(scrollYProgress, [0, 0.85], ["rgba(0, 0, 0, 0.4)", "rgba(255, 255, 255, 0.96)"]);
+  
+  // Progress Bar & Track
+  const trackBgColor = useTransform(scrollYProgress, [0, 0.85], ["#27272A", "#E2E8F0"]);
 
   const getSizeClasses = (size) => {
     switch (size) {
@@ -126,59 +156,57 @@ export default function Certificates() {
     <section 
       id="certifications" 
       ref={targetRef} 
-      className="relative h-[450vh] bg-transparent text-[#E8E6E1] select-none"
+      className="relative h-[450vh] select-none"
     >
-      {/* Sticky Fullscreen Viewport */}
-      <div className="sticky top-0 flex h-screen w-full items-center overflow-hidden z-10">
-        
-        {/* Subtle Background Graphic (Lando-style organic topographic contour lines) */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-25">
-          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="certLineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#00F0FF" stopOpacity="0.3" />
-                <stop offset="50%" stopColor="#84cc16" stopOpacity="0.1" />
-                <stop offset="100%" stopColor="#00F0FF" stopOpacity="0.25" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M -100 200 C 300 400, 600 -100, 1200 300 C 1800 700, 2200 100, 2800 400"
-              fill="none"
-              stroke="url(#certLineGrad)"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M -50 450 C 400 150, 900 650, 1500 250 C 2100 -150, 2500 500, 3100 200"
-              fill="none"
-              stroke="url(#certLineGrad)"
-              strokeWidth="1.5"
-            />
-            <path
-              d="M 100 800 C 600 500, 1100 900, 1700 600 C 2300 300, 2700 800, 3300 650"
-              fill="none"
-              stroke="url(#certLineGrad)"
-              strokeWidth="1"
-            />
-          </svg>
-        </div>
+      {/* Sticky Fullscreen Viewport (Single Global Background flows behind) */}
+      <motion.div 
+        ref={viewportRef}
+        style={{ backgroundColor: sectionBg }}
+        className="sticky top-0 flex h-screen w-full items-center overflow-hidden z-10"
+      >
+        {/* Diagonal Float Container: Starts (50vw, 30vh) -> Glides in with cubic-bezier(0.2, 0.8, 0.2, 1) */}
+        <motion.div
+          initial={{ x: '50vw', y: '30vh', opacity: 0 }}
+          animate={isInView ? { x: 0, y: 0, opacity: 1 } : { x: '50vw', y: '30vh', opacity: 0 }}
+          transition={{
+            duration: 1.2,
+            delay: 0.2,
+            ease: [0.2, 0.8, 0.2, 1]
+          }}
+          className="relative w-full h-full flex flex-col justify-center overflow-hidden"
+        >
 
         {/* Top Progress Bar & Counter Indicator */}
         <div className="absolute top-8 left-8 right-8 z-30 flex items-center justify-between pointer-events-none">
           <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#00F0FF] animate-ping" />
-            <span className="text-xs font-mono uppercase tracking-[0.25em] text-[#00F0FF]/90 font-bold">
+            <motion.span 
+              style={{ backgroundColor: accentColor }}
+              className="w-2.5 h-2.5 rounded-full animate-ping" 
+            />
+            <motion.span 
+              style={{ color: accentColor }}
+              className="text-xs font-mono uppercase tracking-[0.25em] font-bold"
+            >
               03. Credentials &amp; Verification
-            </span>
+            </motion.span>
           </div>
           
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono text-zinc-400">SCROLL HORIZONTALLY</span>
-            <div className="w-24 md:w-36 h-[2px] bg-zinc-800 rounded-full overflow-hidden">
+            <motion.span 
+              style={{ color: subtextColor }}
+              className="text-xs font-mono font-medium"
+            >
+              SCROLL HORIZONTALLY
+            </motion.span>
+            <motion.div 
+              style={{ backgroundColor: trackBgColor }}
+              className="w-24 md:w-36 h-[2px] rounded-full overflow-hidden"
+            >
               <motion.div 
                 style={{ width: progressWidth }} 
                 className="h-full bg-gradient-to-r from-cyan-500 to-[#00F0FF]"
               />
-            </div>
+            </motion.div>
           </div>
         </div>
 
@@ -189,39 +217,63 @@ export default function Certificates() {
         >
           {/* 1. Intro Title Block */}
           <div className="w-[36vw] min-w-[320px] max-w-[540px] flex-shrink-0 self-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-950/40 text-[#00F0FF] border border-cyan-500/30 mb-6">
+            <motion.div 
+              style={{ 
+                backgroundColor: accentPillBg, 
+                borderColor: accentBorder,
+                color: accentColor 
+              }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-semibold border mb-6"
+            >
               <Sparkles className="w-3.5 h-3.5" />
               Verified Achievements
-            </div>
-            <h2 className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-tighter leading-[0.88] text-white">
+            </motion.div>
+            
+            <motion.h2 
+              style={{ color: headingColor }}
+              className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-tighter leading-[0.88]"
+            >
               Certificates <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00F0FF] via-cyan-300 to-teal-200">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00F0FF] via-cyan-500 to-teal-500">
                 &amp; Milestones
               </span>
-            </h2>
-            <p className="mt-8 text-base md:text-lg font-mono text-zinc-400 leading-relaxed">
+            </motion.h2>
+
+            <motion.p 
+              style={{ color: subtextColor }}
+              className="mt-8 text-base md:text-lg font-mono font-medium leading-relaxed"
+            >
               Industrial certifications, technical coursework, and competitive milestones across AI, Cloud Architecture, and Distributed Systems.
-            </p>
-            <div className="mt-6 flex items-center gap-2 text-xs font-mono text-[#00F0FF]/70">
+            </motion.p>
+            
+            <motion.div 
+              style={{ color: accentColor }}
+              className="mt-6 flex items-center gap-2 text-xs font-mono font-semibold"
+            >
               <span>← Drag or scroll down to explore gallery →</span>
-            </div>
+            </motion.div>
           </div>
 
-          {/* 2. Map through First Set of Certificates (1 to 3) */}
+          {/* 2. First Set of Certificates (1 to 3) */}
           {certificates.slice(0, 3).map((cert) => (
             <div
               key={cert.id}
               onClick={() => setSelectedCert(cert)}
-              className={`flex-shrink-0 cursor-pointer group transition-all duration-500 ${getAlignClasses(cert.align)}`}
+              className={`flex-shrink-0 cursor-pointer group ${getAlignClasses(cert.align)}`}
             >
-              <div 
-                className={`relative rounded-2xl overflow-hidden bg-[#181C19]/80 backdrop-blur-md border border-white/10 group-hover:border-[#00F0FF]/60 group-hover:shadow-[0_0_35px_rgba(0,240,255,0.25)] transition-all duration-500 ${getSizeClasses(cert.size)}`}
+              <motion.div 
+                style={{ 
+                  backgroundColor: cardBg,
+                  borderColor: cardBorder,
+                  boxShadow: cardShadow
+                }}
+                className={`relative rounded-2xl overflow-hidden backdrop-blur-md border group-hover:border-[#00F0FF]/60 group-hover:shadow-[0_0_35px_rgba(0,240,255,0.25)] ${getSizeClasses(cert.size)}`}
               >
                 {/* Image */}
                 <img
                   src={cert.img}
                   alt={cert.title}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = '/profile-placeholder.svg';
@@ -229,66 +281,117 @@ export default function Certificates() {
                 />
 
                 {/* Dark Vignette Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-70 group-hover:opacity-30" />
 
                 {/* Floating Badge */}
                 <div className="absolute top-4 left-4 z-10">
-                  <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold bg-black/60 backdrop-blur-md text-[#00F0FF] border border-[#00F0FF]/30">
+                  <motion.span 
+                    style={{ 
+                      backgroundColor: accentPillBg, 
+                      color: accentColor,
+                      borderColor: accentBorder
+                    }}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold backdrop-blur-md border shadow-sm"
+                  >
                     {cert.tag}
-                  </span>
+                  </motion.span>
                 </div>
 
                 {/* Quick Expand Icon */}
-                <div className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 group-hover:text-[#00F0FF] group-hover:border-[#00F0FF] transition-colors">
+                <div className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 group-hover:text-[#00F0FF] group-hover:border-[#00F0FF]">
                   <Eye className="w-4 h-4" />
                 </div>
 
                 {/* Bottom Card Info */}
-                <div className="absolute bottom-0 inset-x-0 p-5 z-10">
-                  <span className="text-xs font-mono text-[#00F0FF] font-medium tracking-wider uppercase">
+                <motion.div 
+                  style={{ backgroundColor: cardFooterBg }}
+                  className="absolute bottom-0 inset-x-0 p-5 z-10 border-t border-black/5 dark:border-white/5 backdrop-blur-md"
+                >
+                  <motion.span 
+                    style={{ color: accentColor }}
+                    className="text-xs font-mono font-bold tracking-wider uppercase"
+                  >
                     {cert.issuer} • {cert.date}
-                  </span>
-                  <h4 className="text-base sm:text-lg font-bold text-white tracking-tight mt-1 line-clamp-2 group-hover:text-cyan-200 transition-colors">
+                  </motion.span>
+                  <motion.h4 
+                    style={{ color: cardTitleColor }}
+                    className="text-base sm:text-lg font-extrabold tracking-tight mt-1 line-clamp-2 group-hover:text-cyan-500"
+                  >
                     {cert.title}
-                  </h4>
-                </div>
-              </div>
+                  </motion.h4>
+                </motion.div>
+              </motion.div>
             </div>
           ))}
 
-          {/* 3. Lando Norris Style Editorial Quote Block */}
+          {/* 3. Lando Norris Editorial Quote Block */}
           <div className="w-[32vw] min-w-[300px] max-w-[480px] flex-shrink-0 self-start mt-12 md:mt-20">
-            <div className="p-8 rounded-3xl bg-[#181C19]/40 backdrop-blur-xl border border-white/10 relative overflow-hidden">
-              <div className="absolute -top-12 -right-12 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-              <span className="text-5xl text-[#00F0FF]/30 font-serif leading-none select-none">“</span>
-              <h3 className="text-2xl sm:text-3xl md:text-4xl font-serif italic text-white/95 leading-snug -mt-4">
+            <motion.div 
+              style={{ 
+                backgroundColor: cardBg,
+                borderColor: cardBorder,
+                boxShadow: cardShadow
+              }}
+              className="p-8 rounded-3xl backdrop-blur-xl border relative overflow-hidden"
+            >
+              <motion.span 
+                style={{ color: accentColor }}
+                className="text-6xl font-serif leading-none select-none opacity-80 block mb-2"
+              >
+                “
+              </motion.span>
+              <motion.h3 
+                style={{ color: headingColor }}
+                className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold italic leading-snug -mt-2"
+              >
                 It doesn't matter where you start, it's how you progress from there.
-              </h3>
-              <div className="mt-6 flex items-center justify-between pt-4 border-t border-white/10">
+              </motion.h3>
+              <motion.div 
+                style={{ borderColor: cardBorder }}
+                className="mt-6 flex items-center justify-between pt-4 border-t"
+              >
                 <div>
-                  <p className="text-sm font-bold tracking-wide uppercase text-[#00F0FF]">Karan Shakya</p>
-                  <p className="text-xs font-mono text-zinc-400">Software &amp; AI Engineer</p>
+                  <motion.p 
+                    style={{ color: accentColor }}
+                    className="text-sm font-extrabold tracking-wide uppercase"
+                  >
+                    Karan Shakya
+                  </motion.p>
+                  <motion.p 
+                    style={{ color: subtextColor }}
+                    className="text-xs font-mono font-semibold"
+                  >
+                    Software &amp; AI Engineer
+                  </motion.p>
                 </div>
-                <div className="w-12 h-6 border-b-2 border-r-2 border-[#00F0FF]/50 transform -rotate-12" />
-              </div>
-            </div>
+                <motion.div 
+                  style={{ borderColor: accentColor }}
+                  className="w-12 h-6 border-b-2 border-r-2 opacity-80 transform -rotate-12" 
+                />
+              </motion.div>
+            </motion.div>
           </div>
 
-          {/* 4. Map through Remaining Certificates (4 to 8) */}
+          {/* 4. Remaining Certificates (4 to 8) */}
           {certificates.slice(3).map((cert) => (
             <div
               key={cert.id}
               onClick={() => setSelectedCert(cert)}
-              className={`flex-shrink-0 cursor-pointer group transition-all duration-500 ${getAlignClasses(cert.align)}`}
+              className={`flex-shrink-0 cursor-pointer group ${getAlignClasses(cert.align)}`}
             >
-              <div 
-                className={`relative rounded-2xl overflow-hidden bg-[#181C19]/80 backdrop-blur-md border border-white/10 group-hover:border-[#00F0FF]/60 group-hover:shadow-[0_0_35px_rgba(0,240,255,0.25)] transition-all duration-500 ${getSizeClasses(cert.size)}`}
+              <motion.div 
+                style={{ 
+                  backgroundColor: cardBg,
+                  borderColor: cardBorder,
+                  boxShadow: cardShadow
+                }}
+                className={`relative rounded-2xl overflow-hidden backdrop-blur-md border group-hover:border-[#00F0FF]/60 group-hover:shadow-[0_0_35px_rgba(0,240,255,0.25)] ${getSizeClasses(cert.size)}`}
               >
                 {/* Image */}
                 <img
                   src={cert.img}
                   alt={cert.title}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = '/profile-placeholder.svg';
@@ -296,46 +399,65 @@ export default function Certificates() {
                 />
 
                 {/* Dark Vignette Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-70 group-hover:opacity-30" />
 
                 {/* Floating Badge */}
                 <div className="absolute top-4 left-4 z-10">
-                  <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold bg-black/60 backdrop-blur-md text-[#00F0FF] border border-[#00F0FF]/30">
+                  <motion.span 
+                    style={{ 
+                      backgroundColor: accentPillBg, 
+                      color: accentColor,
+                      borderColor: accentBorder
+                    }}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold backdrop-blur-md border shadow-sm"
+                  >
                     {cert.tag}
-                  </span>
+                  </motion.span>
                 </div>
 
                 {/* Quick Expand Icon */}
-                <div className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 group-hover:text-[#00F0FF] group-hover:border-[#00F0FF] transition-colors">
+                <div className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/80 group-hover:text-[#00F0FF] group-hover:border-[#00F0FF]">
                   <Eye className="w-4 h-4" />
                 </div>
 
                 {/* Bottom Card Info */}
-                <div className="absolute bottom-0 inset-x-0 p-5 z-10">
-                  <span className="text-xs font-mono text-[#00F0FF] font-medium tracking-wider uppercase">
+                <motion.div 
+                  style={{ backgroundColor: cardFooterBg }}
+                  className="absolute bottom-0 inset-x-0 p-5 z-10 border-t border-black/5 dark:border-white/5 backdrop-blur-md"
+                >
+                  <motion.span 
+                    style={{ color: accentColor }}
+                    className="text-xs font-mono font-bold tracking-wider uppercase"
+                  >
                     {cert.issuer} • {cert.date}
-                  </span>
-                  <h4 className="text-base sm:text-lg font-bold text-white tracking-tight mt-1 line-clamp-2 group-hover:text-cyan-200 transition-colors">
+                  </motion.span>
+                  <motion.h4 
+                    style={{ color: cardTitleColor }}
+                    className="text-base sm:text-lg font-extrabold tracking-tight mt-1 line-clamp-2 group-hover:text-cyan-500"
+                  >
                     {cert.title}
-                  </h4>
-                </div>
-              </div>
+                  </motion.h4>
+                </motion.div>
+              </motion.div>
             </div>
           ))}
 
-          {/* 5. End Outro Card */}
+          {/* 5. End Outro Card - Popped Solid White Card with Black Text */}
           <div className="w-[28vw] min-w-[260px] flex-shrink-0 self-center pl-8">
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-cyan-950/30 to-zinc-900/40 border border-cyan-500/20 text-center flex flex-col items-center">
-              <Award className="w-12 h-12 text-[#00F0FF] mb-4 animate-bounce" />
-              <h4 className="text-2xl font-black uppercase text-white tracking-tight">More to Come</h4>
-              <p className="mt-2 text-xs font-mono text-zinc-400 max-w-xs">
+            <div className="p-8 rounded-3xl bg-white border border-slate-200/90 shadow-[0_20px_50px_rgba(0,0,0,0.14),0_8px_20px_rgba(0,0,0,0.08)] text-center flex flex-col items-center hover:-translate-y-1.5 transition-transform duration-300 relative z-20">
+              <Award className="w-12 h-12 mb-4 text-cyan-600 animate-bounce" />
+              <h4 className="text-2xl font-black uppercase tracking-tight text-black">
+                More to Come
+              </h4>
+              <p className="mt-2 text-xs font-mono font-bold text-slate-900 max-w-xs leading-relaxed">
                 Actively expanding expertise in advanced neural networks, LLM fine-tuning, and scalable cloud solutions.
               </p>
             </div>
           </div>
 
         </motion.div>
-      </div>
+      </motion.div>
+    </motion.div>
 
       {/* Fullscreen High-Resolution Certificate Modal */}
       <AnimatePresence>
@@ -354,7 +476,6 @@ export default function Certificates() {
               onClick={(e) => e.stopPropagation()}
               className="relative max-w-5xl w-full bg-[#181C19] border border-cyan-500/30 rounded-3xl overflow-hidden shadow-2xl cursor-default"
             >
-              {/* Modal Header */}
               <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/40">
                 <div>
                   <span className="text-xs font-mono text-[#00F0FF] uppercase tracking-wider">
@@ -372,7 +493,6 @@ export default function Certificates() {
                 </button>
               </div>
 
-              {/* Modal Image Frame */}
               <div className="p-4 sm:p-8 flex items-center justify-center bg-black/60 max-h-[75vh] overflow-auto">
                 <img
                   src={selectedCert.img}
