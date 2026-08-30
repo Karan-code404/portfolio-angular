@@ -16,15 +16,15 @@ export default function OnOffTrack() {
 
       {/* ========================================================= */}
       {/* Left Edge Image (Helmet / Racing Profile)                  */}
-      {/* Clean anchored edge image with no diagonal scroll offset   */}
+      {/* Glides inward from corner to current position on entrance */}
       {/* ========================================================= */}
       <motion.img
         src="/left_side.png"
         alt="On Track Visual"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: '-40px' }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        initial={{ x: -140, opacity: 0 }}
+        whileInView={{ x: 0, opacity: 1 }}
+        viewport={{ once: false, amount: 0.25 }}
+        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
         className="absolute pointer-events-none select-none z-10 hidden md:block object-contain object-bottom"
         style={{
           position: 'absolute',
@@ -41,7 +41,7 @@ export default function OnOffTrack() {
 
       {/* ========================================================= */}
       {/* Right Edge Image (Side Profile / Portrait)                */}
-      {/* Clean anchored edge image with no diagonal scroll offset   */}
+      {/* Glides inward from corner to current position on entrance */}
       {/* ========================================================= */}
       <motion.img
         src="/right_side.png"
@@ -49,10 +49,10 @@ export default function OnOffTrack() {
           e.currentTarget.src = '/ride_side.png';
         }}
         alt="Off Track Visual"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: '-40px' }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        initial={{ x: 140, opacity: 0 }}
+        whileInView={{ x: 0, opacity: 1 }}
+        viewport={{ once: false, amount: 0.25 }}
+        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
         className="absolute pointer-events-none select-none z-10 hidden md:block object-contain object-bottom"
         style={{
           position: 'absolute',
@@ -78,12 +78,13 @@ export default function OnOffTrack() {
           
           {/* ----------------------------------------------------- */}
           {/* Column 1: ON TRACK (Left Side)                        */}
+          {/* Glides inward from left towards center on view        */}
           {/* ----------------------------------------------------- */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ x: -60, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col items-start text-left"
           >
             {/* Title with Serif "ON" + Sans-Serif "TRACK" */}
@@ -131,12 +132,13 @@ export default function OnOffTrack() {
 
           {/* ----------------------------------------------------- */}
           {/* Column 2: OFF TRACK (Right Side)                       */}
+          {/* Glides inward from right towards center on view       */}
           {/* ----------------------------------------------------- */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ x: 60, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            viewport={{ once: false, amount: 0.25 }}
+            transition={{ duration: 1.0, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col items-start text-left"
           >
             {/* Title with Serif "OFF" + Sans-Serif "TRACK" */}
