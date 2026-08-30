@@ -16,15 +16,15 @@ export default function OnOffTrack() {
 
       {/* ========================================================= */}
       {/* Left Edge Image (Helmet / Racing Profile)                  */}
-      {/* Glides inward from corner to current position on entrance */}
+      {/* Ultra-slow cinematic diagonal glide from bottom-corner     */}
       {/* ========================================================= */}
       <motion.img
         src="/left_side.png"
         alt="On Track Visual"
-        initial={{ x: -140, opacity: 0 }}
-        whileInView={{ x: 0, opacity: 1 }}
-        viewport={{ once: false, amount: 0.25 }}
-        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ x: -280, y: 140, opacity: 0 }}
+        whileInView={{ x: 0, y: 0, opacity: 1 }}
+        viewport={{ once: false, amount: 0.12 }}
+        transition={{ duration: 2.4, ease: [0.12, 0.9, 0.2, 1] }}
         className="absolute pointer-events-none select-none z-10 hidden md:block object-contain object-bottom"
         style={{
           position: 'absolute',
@@ -41,7 +41,7 @@ export default function OnOffTrack() {
 
       {/* ========================================================= */}
       {/* Right Edge Image (Side Profile / Portrait)                */}
-      {/* Glides inward from corner to current position on entrance */}
+      {/* Ultra-slow cinematic diagonal glide from bottom-corner     */}
       {/* ========================================================= */}
       <motion.img
         src="/right_side.png"
@@ -49,10 +49,10 @@ export default function OnOffTrack() {
           e.currentTarget.src = '/ride_side.png';
         }}
         alt="Off Track Visual"
-        initial={{ x: 140, opacity: 0 }}
-        whileInView={{ x: 0, opacity: 1 }}
-        viewport={{ once: false, amount: 0.25 }}
-        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ x: 280, y: 140, opacity: 0 }}
+        whileInView={{ x: 0, y: 0, opacity: 1 }}
+        viewport={{ once: false, amount: 0.12 }}
+        transition={{ duration: 2.4, ease: [0.12, 0.9, 0.2, 1] }}
         className="absolute pointer-events-none select-none z-10 hidden md:block object-contain object-bottom"
         style={{
           position: 'absolute',
@@ -78,13 +78,13 @@ export default function OnOffTrack() {
           
           {/* ----------------------------------------------------- */}
           {/* Column 1: ON TRACK (Left Side)                        */}
-          {/* Glides inward from left towards center on view        */}
+          {/* Glides inward slowly together with the photos         */}
           {/* ----------------------------------------------------- */}
           <motion.div
-            initial={{ x: -60, opacity: 0 }}
+            initial={{ x: -100, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
-            viewport={{ once: false, amount: 0.25 }}
-            transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+            viewport={{ once: false, amount: 0.12 }}
+            transition={{ duration: 2.2, ease: [0.12, 0.9, 0.2, 1] }}
             className="flex flex-col items-start text-left"
           >
             {/* Title with Serif "ON" + Sans-Serif "TRACK" */}
@@ -132,13 +132,13 @@ export default function OnOffTrack() {
 
           {/* ----------------------------------------------------- */}
           {/* Column 2: OFF TRACK (Right Side)                       */}
-          {/* Glides inward from right towards center on view       */}
+          {/* Glides inward slowly together with the photos         */}
           {/* ----------------------------------------------------- */}
           <motion.div
-            initial={{ x: 60, opacity: 0 }}
+            initial={{ x: 100, opacity: 0 }}
             whileInView={{ x: 0, opacity: 1 }}
-            viewport={{ once: false, amount: 0.25 }}
-            transition={{ duration: 1.0, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+            viewport={{ once: false, amount: 0.12 }}
+            transition={{ duration: 2.2, ease: [0.12, 0.9, 0.2, 1] }}
             className="flex flex-col items-start text-left"
           >
             {/* Title with Serif "OFF" + Sans-Serif "TRACK" */}
