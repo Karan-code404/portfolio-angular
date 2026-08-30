@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 export default function OnOffTrack() {
   const sectionRef = useRef(null);
 
-  // Scroll tracking across the sticky section (220vh total track)
+  // Scroll tracking across sticky section
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end end'],
@@ -12,40 +12,40 @@ export default function OnOffTrack() {
 
   // =========================================================================
   // Left Image Scroll Motion:
-  // - 0.0 -> 0.35: Glides up & diagonally from bottom-left into position
-  // - 0.35 -> 0.65: Locked in primary viewing frame
-  // - 0.65 -> 1.00: Glides further inward closer to center as user continues scrolling
+  // - 0.00 -> 0.38: Enters diagonally from bottom-left corner (x: -25vw, y: 35vh -> 0)
+  // - 0.38 -> 0.62: Rest position / full view
+  // - 0.62 -> 1.00: Moves closer inward towards center (x: 0 -> +20vw)
   // =========================================================================
-  const leftX = useTransform(scrollYProgress, [0, 0.35, 0.65, 1], ['-120px', '0px', '0px', '140px']);
-  const leftY = useTransform(scrollYProgress, [0, 0.35, 1], ['180px', '0px', '0px']);
-  const leftOpacity = useTransform(scrollYProgress, [0, 0.25], [0.2, 1]);
+  const leftX = useTransform(scrollYProgress, [0, 0.38, 0.62, 1], ['-25vw', '0vw', '0vw', '20vw']);
+  const leftY = useTransform(scrollYProgress, [0, 0.38, 1], ['35vh', '0vh', '0vh']);
+  const leftOpacity = useTransform(scrollYProgress, [0, 0.25], [0.15, 1]);
 
   // =========================================================================
   // Right Image Scroll Motion:
-  // - 0.0 -> 0.35: Glides up & diagonally from bottom-right into position
-  // - 0.35 -> 0.65: Locked in primary viewing frame
-  // - 0.65 -> 1.00: Glides further inward closer to center as user continues scrolling
+  // - 0.00 -> 0.38: Enters diagonally from bottom-right corner (x: 25vw, y: 35vh -> 0)
+  // - 0.38 -> 0.62: Rest position / full view
+  // - 0.62 -> 1.00: Moves closer inward towards center (x: 0 -> -20vw)
   // =========================================================================
-  const rightX = useTransform(scrollYProgress, [0, 0.35, 0.65, 1], ['120px', '0px', '0px', '-140px']);
-  const rightY = useTransform(scrollYProgress, [0, 0.35, 1], ['180px', '0px', '0px']);
-  const rightOpacity = useTransform(scrollYProgress, [0, 0.25], [0.2, 1]);
+  const rightX = useTransform(scrollYProgress, [0, 0.38, 0.62, 1], ['25vw', '0vw', '0vw', '-20vw']);
+  const rightY = useTransform(scrollYProgress, [0, 0.38, 1], ['35vh', '0vh', '0vh']);
+  const rightOpacity = useTransform(scrollYProgress, [0, 0.25], [0.15, 1]);
 
-  // Center Content Scaling & Opacity
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.25, 0.85, 1], [0.4, 1, 1, 0.9]);
-  const contentY = useTransform(scrollYProgress, [0, 0.3, 1], ['40px', '0px', '0px']);
+  // Center Content Motion
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.28, 0.85, 1], [0.3, 1, 1, 0.85]);
+  const contentY = useTransform(scrollYProgress, [0, 0.35, 1], ['30px', '0px', '0px']);
 
   return (
     <section
       id="on-off-track"
       ref={sectionRef}
-      className="relative h-[220vh] w-full select-none"
+      className="relative h-[280vh] w-full select-none"
     >
       {/* Sticky Fullscreen Viewport */}
       <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
         
         {/* ========================================================= */}
         {/* Left Edge Image (Helmet / Racing Profile)                  */}
-        {/* Enters diagonally from bottom-left & moves closer inward  */}
+        {/* Enters diagonally from bottom-left & converges inward     */}
         {/* ========================================================= */}
         <motion.img
           src="/left_side.png"
@@ -69,7 +69,7 @@ export default function OnOffTrack() {
 
         {/* ========================================================= */}
         {/* Right Edge Image (Side Profile / Portrait)                */}
-        {/* Enters diagonally from bottom-right & moves closer inward */}
+        {/* Enters diagonally from bottom-right & converges inward    */}
         {/* ========================================================= */}
         <motion.img
           src="/right_side.png"
