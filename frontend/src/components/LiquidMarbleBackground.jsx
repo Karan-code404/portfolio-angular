@@ -331,6 +331,7 @@ export default function LiquidMarbleBackground() {
     // Compute dynamic white transition factor based on page scroll
     function computeWhiteProgress() {
       const certEl = document.getElementById('certifications');
+      const trackEl = document.getElementById('on-off-track');
       const projectsEl = document.getElementById('projects');
       const contactEl = document.getElementById('contact');
 
@@ -347,7 +348,15 @@ export default function LiquidMarbleBackground() {
           const rawProgress = Math.min(Math.max(-certRect.top / certTotalScrollable, 0), 1);
           target = rawProgress;
         } else if (certRect.bottom < 0) {
-          // Past Certificates -> User is in Projects section (Pure White)!
+          // Past Certificates -> User is in On/Off Track or Projects section (Pure White)!
+          target = 1.0;
+        }
+      }
+
+      // Keep solid white while in On/Off Track section
+      if (trackEl) {
+        const trackRect = trackEl.getBoundingClientRect();
+        if (trackRect.top < winHeight && trackRect.bottom > 0) {
           target = 1.0;
         }
       }

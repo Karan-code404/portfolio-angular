@@ -5,6 +5,7 @@ import About from './components/About';
 import Skills from './components/Skills';
 import Projects from './components/Projects';
 import Certificates from './components/Certificates';
+import OnOffTrack from './components/OnOffTrack';
 import Contact from './components/Contact';
 import ContactMe from './components/ContactMe';
 import LiquidMarbleBackground from './components/LiquidMarbleBackground';
@@ -37,6 +38,11 @@ export default function App() {
       {/* Full-bleed Sticky Horizontal Scroll Certificates Section (Lando Norris Aesthetic) */}
       <div className="relative z-10 w-full">
         <Certificates />
+      </div>
+
+      {/* On Track / Off Track Section */}
+      <div className="relative z-10 w-full">
+        <OnOffTrack />
       </div>
 
       {/* Projects Section - Full Bleed Unclipped Container for Dynamic Magnetic Fan Repulsion */}
