@@ -35,7 +35,7 @@ function ParallaxFanCard({
   const isCenter = offset === 0;
 
   // Base Fan Geometry constants
-  const baseSpacing = 215; // px
+  const baseSpacing = 238; // px
   const baseTranslateX = offset * baseSpacing;
   const baseTranslateY = Math.pow(absOffset, 1.55) * 32; // Parabolic curve
   const baseRotateZ = offset * 5.2; // degrees
@@ -97,8 +97,8 @@ function ParallaxFanCard({
     springHoverScale.set(dynamicHoverScale);
   }, [dynamicHoverX, dynamicHoverY, dynamicHoverRotateZ, dynamicHoverScale, springHoverX, springHoverY, springHoverRotateZ, springHoverScale]);
 
-  // 1. Deck Rise Progress (p: 0 -> 0.5): Compact deck rises from below (y: 320 -> 0)
-  const deckRiseY = useTransform(smoothScroll, [0, 0.5, 1], [320, 40, 0]);
+  // 1. Deck Rise Progress (p: 0 -> 0.5): Compact deck rises from below and sits higher
+  const deckRiseY = useTransform(smoothScroll, [0, 0.5, 1], [180, 0, -45]);
   
   // 2. Fan Spread Progress (p: 0.45 -> 1.0): Cards fan out horizontally as user reaches center of section
   const fanFactor = useTransform(smoothScroll, [0.45, 1], [0, 1], { clamp: true });
@@ -184,7 +184,7 @@ function ParallaxFanCard({
       }}
       onMouseEnter={() => setHoveredIndex(index)}
       onMouseLeave={() => setHoveredIndex(null)}
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[370px] md:w-[390px] h-[530px] sm:h-[550px] cursor-pointer select-none origin-center"
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] sm:w-[400px] md:w-[425px] h-[565px] sm:h-[595px] cursor-pointer select-none origin-center"
     >
       {/* 3D Glossy Card Shell - Clean White Theme */}
       <div 
@@ -248,7 +248,7 @@ function ParallaxFanCard({
               openLightbox(e, project.images, 0);
             }
           }}
-          className="relative z-10 w-full h-[160px] sm:h-[175px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex-shrink-0 group/img cursor-pointer shadow-inner"
+          className="relative z-10 w-full h-[175px] sm:h-[190px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex-shrink-0 group/img cursor-pointer shadow-inner"
         >
           {project.images && project.images.length > 0 ? (
             <>
@@ -548,13 +548,13 @@ export default function Projects() {
       ref={sectionRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative w-full py-32 sm:py-40 md:py-44 px-2 sm:px-4 md:px-6 select-none scroll-mt-10 overflow-hidden text-slate-100"
+      className="relative w-full pt-16 sm:pt-20 md:pt-24 pb-28 sm:pb-36 px-2 sm:px-4 md:px-6 select-none scroll-mt-10 overflow-hidden text-slate-100"
     >
       {/* Background Subtle Ambient Aura */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] bg-cyan-500/10 rounded-full blur-[160px] pointer-events-none z-0" />
 
       {/* Section Header */}
-      <div className="relative z-10 max-w-7xl mx-auto mb-14 sm:mb-20 flex flex-col md:flex-row md:items-end justify-between gap-6 px-4 sm:px-6">
+      <div className="relative z-10 max-w-7xl mx-auto mb-4 sm:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6 px-4 sm:px-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-cyan-50 text-cyan-700 border border-cyan-200 mb-3 shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
@@ -648,7 +648,7 @@ export default function Projects() {
       ) : (
         /* Desktop & Tablet: Full 3D Interactive Scroll-Scrubbed Parallax Fan Stage */
         <div
-          className="relative z-10 w-full max-w-[1600px] mx-auto min-h-[840px] sm:min-h-[880px] md:min-h-[920px] flex items-center justify-center overflow-visible py-12"
+          className="relative z-10 w-full max-w-[1600px] mx-auto min-h-[760px] sm:min-h-[800px] md:min-h-[830px] flex items-center justify-center overflow-visible py-4"
           style={{ perspective: '1400px' }}
         >
           {projectsList.map((project, index) => (

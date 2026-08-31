@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, useSpring, AnimatePresence } from 'framer-motion';
 import { Eye, X, Award, ExternalLink, Sparkles } from 'lucide-react';
 
 const certificates = [
@@ -90,43 +90,50 @@ export default function Certificates() {
   const viewportRef = useRef(null);
   const [selectedCert, setSelectedCert] = useState(null);
 
-  // 1. Scroll progress mapped strictly to the Certificates 450vh container
+  // 1. Scroll progress mapped strictly to the Certificates container
   const { scrollYProgress } = useScroll({
     target: targetRef,
     offset: ["start start", "end end"]
   });
 
-  // Precision Trigger: fires when 40%-50% of the section viewport is in view
-  const isInView = useInView(viewportRef, {
-    once: false,
-    amount: 0.45
+  // Silky smooth spring physics for horizontal glide (reduces jerkiness & gives meditative slow flow)
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 45,
+    damping: 20,
+    restDelta: 0.001
   });
 
-  // 2. Horizontal track motion
-  const x = useTransform(scrollYProgress, [0, 1], ["0%", "-78%"]);
-  const progressWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+  // Precision Trigger: fires when section viewport is in view (once: true prevents re-animating/sliding out when leaving section)
+  const isInView = useInView(viewportRef, {
+    once: true,
+    amount: 0.2
+  });
+
+  // 2. Horizontal track motion using silky spring
+  const x = useTransform(smoothProgress, [0, 1], ["0%", "-78%"]);
+  const progressWidth = useTransform(smoothProgress, [0, 1], ["0%", "100%"]);
 
   // Background lets the single global continuous water wave background show through
-  const sectionBg = useTransform(scrollYProgress, [0, 0.6, 1], ["transparent", "transparent", "transparent"]);
-  const headingColor = useTransform(scrollYProgress, [0, 0.85], ["#FFFFFF", "#09090b"]);
-  const subtextColor = useTransform(scrollYProgress, [0, 0.85], ["#A1A1AA", "#1e293b"]);
-  const accentColor = useTransform(scrollYProgress, [0, 0.85], ["#00F0FF", "#0284C7"]);
-  const accentBorder = useTransform(scrollYProgress, [0, 0.85], ["rgba(0, 240, 255, 0.3)", "rgba(2, 132, 199, 0.35)"]);
-  const accentPillBg = useTransform(scrollYProgress, [0, 0.85], ["rgba(8, 51, 68, 0.5)", "rgba(224, 242, 254, 0.95)"]);
+  const sectionBg = useTransform(smoothProgress, [0, 0.6, 1], ["transparent", "transparent", "transparent"]);
+  const headingColor = useTransform(smoothProgress, [0, 0.85], ["#FFFFFF", "#09090b"]);
+  const subtextColor = useTransform(smoothProgress, [0, 0.85], ["#A1A1AA", "#1e293b"]);
+  const accentColor = useTransform(smoothProgress, [0, 0.85], ["#00F0FF", "#0284C7"]);
+  const accentBorder = useTransform(smoothProgress, [0, 0.85], ["rgba(0, 240, 255, 0.3)", "rgba(2, 132, 199, 0.35)"]);
+  const accentPillBg = useTransform(smoothProgress, [0, 0.85], ["rgba(8, 51, 68, 0.5)", "rgba(224, 242, 254, 0.95)"]);
 
   // Card Surfaces & Borders (Dark translucent -> pure crisp elevated light card)
-  const cardBg = useTransform(scrollYProgress, [0, 0.85], ["rgba(24, 28, 25, 0.85)", "rgba(255, 255, 255, 0.98)"]);
-  const cardBorder = useTransform(scrollYProgress, [0, 0.85], ["rgba(255, 255, 255, 0.1)", "rgba(15, 23, 42, 0.15)"]);
+  const cardBg = useTransform(smoothProgress, [0, 0.85], ["rgba(24, 28, 25, 0.85)", "rgba(255, 255, 255, 0.98)"]);
+  const cardBorder = useTransform(smoothProgress, [0, 0.85], ["rgba(255, 255, 255, 0.1)", "rgba(15, 23, 42, 0.15)"]);
   const cardShadow = useTransform(
-    scrollYProgress,
+    smoothProgress,
     [0, 0.85],
     ["0 0 0 rgba(0, 0, 0, 0)", "0 25px 50px -12px rgba(15, 23, 42, 0.15)"]
   );
-  const cardTitleColor = useTransform(scrollYProgress, [0, 0.85], ["#FFFFFF", "#09090b"]);
-  const cardFooterBg = useTransform(scrollYProgress, [0, 0.85], ["rgba(0, 0, 0, 0.4)", "rgba(255, 255, 255, 0.96)"]);
+  const cardTitleColor = useTransform(smoothProgress, [0, 0.85], ["#FFFFFF", "#09090b"]);
+  const cardFooterBg = useTransform(smoothProgress, [0, 0.85], ["rgba(0, 0, 0, 0.4)", "rgba(255, 255, 255, 0.96)"]);
   
   // Progress Bar & Track
-  const trackBgColor = useTransform(scrollYProgress, [0, 0.85], ["#27272A", "#E2E8F0"]);
+  const trackBgColor = useTransform(smoothProgress, [0, 0.85], ["#27272A", "#E2E8F0"]);
 
   const getSizeClasses = (size) => {
     switch (size) {
@@ -156,7 +163,7 @@ export default function Certificates() {
     <section 
       id="certifications" 
       ref={targetRef} 
-      className="relative h-[450vh] select-none"
+      className="relative h-[400vh] select-none"
     >
       {/* Sticky Fullscreen Viewport (Single Global Background flows behind) */}
       <motion.div 
@@ -164,14 +171,14 @@ export default function Certificates() {
         style={{ backgroundColor: sectionBg }}
         className="sticky top-0 flex h-screen w-full items-center overflow-hidden z-10"
       >
-        {/* Diagonal Float Container: Starts (50vw, 30vh) -> Glides in with cubic-bezier(0.2, 0.8, 0.2, 1) */}
+        {/* Diagonal Float Container: Starts (50vw, 30vh) -> Glides in with slow ultra-smooth easing */}
         <motion.div
-          initial={{ x: '50vw', y: '30vh', opacity: 0 }}
-          animate={isInView ? { x: 0, y: 0, opacity: 1 } : { x: '50vw', y: '30vh', opacity: 0 }}
+          initial={{ x: '45vw', y: '25vh', opacity: 0 }}
+          animate={isInView ? { x: 0, y: 0, opacity: 1 } : { x: '45vw', y: '25vh', opacity: 0 }}
           transition={{
-            duration: 1.2,
-            delay: 0.2,
-            ease: [0.2, 0.8, 0.2, 1]
+            duration: 2.2,
+            delay: 0.1,
+            ease: [0.16, 1, 0.3, 1]
           }}
           className="relative w-full h-full flex flex-col justify-center overflow-hidden"
         >

@@ -369,7 +369,16 @@ export default function LiquidMarbleBackground() {
         }
       }
 
-      // Smoothly fade back to dark when entering Contact section
+      // Keep solid white while in ending-hero section
+      const endingHeroEl = document.getElementById('ending-hero');
+      if (endingHeroEl) {
+        const heroRect = endingHeroEl.getBoundingClientRect();
+        if (heroRect.top < winHeight && heroRect.bottom > 0) {
+          target = 1.0;
+        }
+      }
+
+      // Smoothly fade back to dark when entering Contact section (if present)
       if (contactEl) {
         const contactRect = contactEl.getBoundingClientRect();
         if (contactRect.top < winHeight) {
